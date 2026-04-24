@@ -48,7 +48,7 @@ Each rejection had a specific reason:
 
 HF Spaces is the only $0 option that (a) tolerates a stateful Python process with a loaded model, (b) handles HTTPS and deploy pipeline without extra infrastructure, and (c) signals "ML demo" to reviewers — which is exactly the audience for this project.
 
-**Tradeoff accepted:** the Space sleeps after ~48h inactivity; wake-up on first request is ~5–10s. The URL is `*.hf.space` until a custom subdomain is added via a Cloudflare Worker proxy (deferred).
+**Tradeoff accepted:** the Space sleeps after ~48h inactivity; wake-up on first request is ~5–10s. Externally, the Space serves under a `*.hf.space` URL; end users never see it thanks to the Vercel rewrite layer (see §10).
 
 ## 4. Vector DB — Supabase (Postgres + pgvector)
 
@@ -106,10 +106,34 @@ Gemini Flash Lite returns short grounded answers in roughly 1–2 seconds. A spi
 
 **Tradeoff accepted:** on slower networks or longer answers, the user sees a spinner for the full duration.
 
+## 10. API routing — Vercel rewrite (no separate subdomain, no proxy service)
+
+**Chosen:** the frontend calls `/api/*` same-origin; `vercel.json` rewrites those paths server-side to the HF Space URL. The domain stays registered at MisterDomain with a single CNAME record pointing `dgrag.domenicocaruso.com` → Vercel.
+**Rejected:** a Cloudflare Worker proxy at `api.dgrag.domenicocaruso.com`; direct CNAME to the `.hf.space` URL; HF Spaces Pro custom domain ($9/mo).
+
+A direct DNS record from the domain to the `.hf.space` URL doesn't work: HF's TLS certificate is issued for `*.hf.space`, and the HF edge routes requests based on the `Host` header being a recognized Space hostname. Any external domain needs something in front of HF that (a) terminates TLS with a certificate for the domain, (b) rewrites the `Host` header, and (c) forwards the request.
+
+Cloudflare Workers were the first candidate. They're free, but require migrating the domain's nameservers from MisterDomain to Cloudflare. That's low risk in isolation, but it drags along every existing MX, SPF, DKIM, and TXT record on the domain — none of which relate to this project. Overkill for the one job of proxying one subdomain.
+
+Vercel's rewrite feature does the exact same three jobs, and the frontend is already going there. The rewrite lives server-side on Vercel, so the browser only ever sees one origin (`dgrag.domenicocaruso.com`) and CORS is entirely sidestepped. It also incidentally fixes the observed HF-edge-blocks-POST issue, which only affects browser-to-HF direct calls, not server-to-server ones.
+
+`vercel.json`:
+
+```json
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://d-caruso-dgrag-api.hf.space/:path*" }
+  ]
+}
+```
+
+Frontend calls `/api/query`; Vercel silently forwards to HF; response flows back on the same origin.
+
+**Tradeoff accepted:** the API is coupled to the frontend's origin — if the frontend ever moved to a different host, the rewrite would need to go with it. Swapping to a proper `api.` subdomain later is a one-day migration, not a blocker.
+
 ---
 
 ## Deferred / open
 
-- **Custom subdomain** for the API (`api.dgrag.domenicocaruso.com`) — requires a Cloudflare Worker proxy in front of the `.hf.space` URL. Deferred until the core pipeline is shipping real queries.
 - **Observability** — Langfuse free tier is the likely pick for RAG-aware tracing (retrieval + generation in one trace), but not wired up yet.
 - **Frontend** — Vite + React + Mantine scaffold not yet started; currently only the backend stub is deployed.
