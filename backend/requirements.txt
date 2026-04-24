@@ -1,2 +1,8 @@
 fastapi
 uvicorn[standard]
+sentence-transformers
+google-generativeai
+psycopg[binary]
+psycopg_pool
+pgvector
+slowapi
