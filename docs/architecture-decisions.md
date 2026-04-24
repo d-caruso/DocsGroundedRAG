@@ -8,7 +8,7 @@ DocsGroundedRAG is a Retrieval-Augmented Generation system over a curated subset
 - **Backend:** FastAPI (Python 3.12) → Hugging Face Spaces (Docker)
 - **Vector DB:** Supabase Postgres + `pgvector`
 - **LLM:** Google Gemini 2.5 Flash Lite
-- **Embedding model:** `BAAI/bge-small-en-v1.5` (local sentence-transformers) — *see §6*
+- **Embedding model:** `BAAI/bge-small-en-v1.5` (local sentence-transformers)
 - **Auth:** none (public demo, IP rate-limited)
 
 **Live:** API at `https://d-caruso-dgrag-api.hf.space` · Frontend at `https://dgrag.domenicocaruso.com` (pending) · Source at `https://github.com/d-caruso/DocsGroundedRAG`
@@ -68,16 +68,16 @@ Already integrated in the ingestion pipeline (`scripts/rag_answer.py`), has a ge
 
 **Tradeoff accepted:** vendor lock-in to Google for generation. The prompt template itself is portable — swapping providers is a ~20-line change.
 
-## 6. Embedding model — *decision deferred*
+## 6. Embedding model — `BAAI/bge-small-en-v1.5` (local)
 
-**Current:** `BAAI/bge-small-en-v1.5` via `sentence-transformers` (384-dim, ~133 MB weights).
-**Candidate:** Gemini `text-embedding-004` via API (768-dim, hosted).
+**Chosen:** `BAAI/bge-small-en-v1.5` via `sentence-transformers` (384-dim, ~133 MB weights), running inside the backend container.
+**Rejected:** Gemini `text-embedding-004` via API (768-dim, hosted).
 
-The swap is motivated by the backend RAM footprint of loading a local model: estimated 400–600 MB RSS with PyTorch runtime, which would dominate cold-start time and push against the free-tier memory ceiling. The exact figure has not been measured on the running container yet, so the decision is pending.
+The swap to a hosted API was considered for two reasons: to shrink the Docker image and to eliminate model-load time from cold starts. Measurement invalidated both concerns — the local model's steady-state RSS is ~175 MB inside the container, and load time is a few seconds, well within the free tier's budget. Keeping the model local avoids a per-query network hop, removes a dependency on an embedding API's rate limits, and preserves the embeddings already computed during ingestion.
 
-**Why this matters:** query-time embeddings must be produced by the *same* model as the chunks, otherwise retrieval silently degrades. Swapping means re-embedding the corpus once and updating the `pgvector` column to 768-dim.
+The invariant that the query-time embedder must match the ingestion embedder is now locked in: changing the embedding model in the future requires re-embedding the corpus and updating the `pgvector` column dimension.
 
-**Resolution path:** measure actual process RSS after `sentence-transformers` load on the HF Space; if it fits comfortably under the tier's memory budget with cold starts under ~5s, keep the local model. Otherwise swap to Gemini embeddings.
+**Tradeoff accepted:** the backend container carries `torch` + `sentence-transformers` (~400 MB of dependencies), making the image larger than a pure API-calling alternative.
 
 ## 7. Repo layout — monorepo with `backend/` subdirectory
 
@@ -113,4 +113,3 @@ Gemini Flash Lite returns short grounded answers in roughly 1–2 seconds. A spi
 - **Custom subdomain** for the API (`api.dgrag.domenicocaruso.com`) — requires a Cloudflare Worker proxy in front of the `.hf.space` URL. Deferred until the core pipeline is shipping real queries.
 - **Observability** — Langfuse free tier is the likely pick for RAG-aware tracing (retrieval + generation in one trace), but not wired up yet.
 - **Frontend** — Vite + React + Mantine scaffold not yet started; currently only the backend stub is deployed.
-- **Embedding model final call** — see §6.
