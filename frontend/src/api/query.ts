@@ -14,6 +14,10 @@ function getQueryUrl(): string {
   return new URL('/query', getApiBaseUrl()).toString()
 }
 
+function getHealthUrl(): string {
+  return new URL('/health', getApiBaseUrl()).toString()
+}
+
 export async function postQuery(question: string): Promise<QueryResponse> {
   const controller = new AbortController()
   const requestBody: QueryRequest = {
@@ -35,6 +39,23 @@ export async function postQuery(question: string): Promise<QueryResponse> {
     }
 
     return (await response.json()) as QueryResponse
+  } finally {
+    controller.abort()
+  }
+}
+
+export async function checkHealth(): Promise<void> {
+  const controller = new AbortController()
+
+  try {
+    const response = await fetch(getHealthUrl(), {
+      method: 'GET',
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Health check failed with status ${response.status}`)
+    }
   } finally {
     controller.abort()
   }
