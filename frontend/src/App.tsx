@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 import { AppShell, Box, Group, Stack } from '@mantine/core'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
@@ -86,6 +86,11 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
 function App() {
   const [state, dispatch] = useReducer(chatReducer, initialState)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [state.messages.length])
 
   return (
     <AppShell
@@ -108,7 +113,7 @@ function App() {
         <Stack gap="lg" style={{ flex: 1 }}>
           <Box className="surface-block hero-surface" />
           <Box className="surface-block conversation-surface">
-            <MessageList messages={state.messages} isLoading={state.isLoading} />
+            <MessageList messages={state.messages} isLoading={state.isLoading} bottomRef={bottomRef} />
           </Box>
           <Box className="surface-block composer-surface">
             <ChatInput
