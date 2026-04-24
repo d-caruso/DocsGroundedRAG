@@ -41,3 +41,10 @@ export interface QueryResponse {
   answer: string
   chunks: SourceChunk[]
 }
+
+export type ApiErrorCode = 'config_error' | 'http_error' | 'network_error' | 'unknown_error'
+
+export interface ApiError extends Error {
+  code: ApiErrorCode
+  status?: number
+}

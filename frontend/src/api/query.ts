@@ -1,10 +1,22 @@
-import type { QueryRequest, QueryResponse } from '../types'
+import type { ApiError, ApiErrorCode, QueryRequest, QueryResponse } from '../types'
+
+class ApiClientError extends Error implements ApiError {
+  code: ApiErrorCode
+  status?: number
+
+  constructor(message: string, code: ApiErrorCode, status?: number) {
+    super(message)
+    this.name = 'ApiClientError'
+    this.code = code
+    this.status = status
+  }
+}
 
 function getApiBaseUrl(): string {
   const apiBaseUrl = import.meta.env.VITE_API_URL
 
   if (!apiBaseUrl) {
-    throw new Error('VITE_API_URL is not configured')
+    throw new ApiClientError('VITE_API_URL is not configured', 'config_error')
   }
 
   return apiBaseUrl
@@ -16,6 +28,22 @@ function getQueryUrl(): string {
 
 function getHealthUrl(): string {
   return new URL('/health', getApiBaseUrl()).toString()
+}
+
+function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiClientError) {
+    return error
+  }
+
+  if (error instanceof TypeError) {
+    return new ApiClientError(error.message, 'network_error')
+  }
+
+  if (error instanceof Error) {
+    return new ApiClientError(error.message, 'unknown_error')
+  }
+
+  return new ApiClientError('An unknown API error occurred', 'unknown_error')
 }
 
 export const mockQueryResponse: QueryResponse = {
@@ -72,10 +100,16 @@ export async function postQuery(question: string): Promise<QueryResponse> {
     })
 
     if (!response.ok) {
-      throw new Error(`Query request failed with status ${response.status}`)
+      throw new ApiClientError(
+        `Query request failed with status ${response.status}`,
+        'http_error',
+        response.status,
+      )
     }
 
     return (await response.json()) as QueryResponse
+  } catch (error) {
+    throw toApiError(error)
   } finally {
     controller.abort()
   }
@@ -91,8 +125,14 @@ export async function checkHealth(): Promise<void> {
     })
 
     if (!response.ok) {
-      throw new Error(`Health check failed with status ${response.status}`)
+      throw new ApiClientError(
+        `Health check failed with status ${response.status}`,
+        'http_error',
+        response.status,
+      )
     }
+  } catch (error) {
+    throw toApiError(error)
   } finally {
     controller.abort()
   }
