@@ -1,121 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { AppShell, Box, Group, Stack } from '@mantine/core'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <AppShell
+      header={{ height: 76 }}
+      aside={{ width: 320, breakpoint: 'md' }}
+      padding="lg"
+      className="app-shell"
+    >
+      <AppShell.Header className="shell-header">
+        <Group justify="space-between" h="100%" px="lg">
+          <Group gap="sm" aria-hidden="true">
+            <Box className="placeholder-block placeholder-mark" />
+            <Box className="placeholder-block placeholder-title" />
+          </Group>
+          <Box className="placeholder-block placeholder-action" aria-hidden="true" />
+        </Group>
+      </AppShell.Header>
 
-      <div className="ticks"></div>
+      <AppShell.Main className="shell-main">
+        <Stack gap="lg" aria-hidden="true">
+          <Box className="surface-block hero-surface" />
+          <Stack gap="md" className="surface-block conversation-surface">
+            <Box className="placeholder-line placeholder-line-wide" />
+            <Box className="placeholder-line placeholder-line-mid" />
+            <Box className="placeholder-line placeholder-line-narrow" />
+          </Stack>
+          <Box className="surface-block composer-surface" />
+        </Stack>
+      </AppShell.Main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <AppShell.Aside className="shell-aside" p="lg">
+        <Stack gap="md" aria-hidden="true">
+          <Box className="surface-block aside-header" />
+          <Box className="surface-block aside-card" />
+          <Box className="surface-block aside-card" />
+          <Box className="surface-block aside-card" />
+        </Stack>
+      </AppShell.Aside>
+    </AppShell>
   )
 }
 
