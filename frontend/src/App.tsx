@@ -124,6 +124,7 @@ function App() {
           </Box>
           <Box className="surface-block composer-surface">
             <ChatInput
+              backendReady={state.backendReady}
               isLoading={state.isLoading}
               onSubmit={(value) => {
                 dispatch({ type: 'SEND_MESSAGE', payload: { content: value } })
