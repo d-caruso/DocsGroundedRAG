@@ -1,20 +1,9 @@
-import { Anchor, Badge, Card, Group, Stack, Text, type MantineColor } from '@mantine/core'
+import { Anchor, Badge, Card, Group, Stack, Text } from '@mantine/core'
 import type { SourceChunk } from '../../types'
+import { scoreToColor } from './constants'
 
 interface SourceCardProps {
   chunk: SourceChunk
-}
-
-function getScoreColor(score: number): MantineColor {
-  if (score >= 0.85) {
-    return 'green'
-  }
-
-  if (score >= 0.75) {
-    return 'yellow'
-  }
-
-  return 'yellow'
 }
 
 export function SourceCard({ chunk }: SourceCardProps) {
@@ -27,7 +16,7 @@ export function SourceCard({ chunk }: SourceCardProps) {
           <Text size="xs" c="dimmed">
             {sectionLabel}
           </Text>
-          <Badge color={getScoreColor(chunk.score)} variant="light">
+          <Badge color={scoreToColor(chunk.score)} variant="light">
             {chunk.score.toFixed(2)}
           </Badge>
         </Group>
