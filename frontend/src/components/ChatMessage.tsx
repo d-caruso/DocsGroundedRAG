@@ -30,6 +30,10 @@ const markdownComponents: Components = {
 export function ChatMessage({ message, onRetry }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const isAssistant = message.role === 'assistant'
+  const formattedTimestamp = new Intl.DateTimeFormat(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(message.timestamp)
 
   if (message.status === 'error') {
     return (
@@ -48,15 +52,20 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
           w="100%"
         >
           <Group justify="space-between" gap="sm" wrap="nowrap">
-            <Text
-              size="sm"
-              style={{
-                whiteSpace: 'pre-wrap',
-                overflowWrap: 'anywhere',
-              }}
-            >
-              {message.content}
-            </Text>
+            <Box style={{ flex: 1 }}>
+              <Text
+                size="sm"
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  overflowWrap: 'anywhere',
+                }}
+              >
+                {message.content}
+              </Text>
+              <Text size="xs" c="dimmed" mt={6}>
+                {formattedTimestamp}
+              </Text>
+            </Box>
             <ActionIcon
               variant="subtle"
               color="red"
@@ -165,19 +174,27 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                   {message.content}
                 </ReactMarkdown>
+                <Text size="xs" c="dimmed" mt="sm">
+                  {formattedTimestamp}
+                </Text>
               </Box>
             </ScrollArea.Autosize>
           </Box>
         ) : (
-          <Text
-            size="sm"
-            style={{
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'anywhere',
-            }}
-          >
-            {message.content}
-          </Text>
+          <Box>
+            <Text
+              size="sm"
+              style={{
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {message.content}
+            </Text>
+            <Text size="xs" c={isUser ? 'rgba(255, 255, 255, 0.72)' : 'dimmed'} mt={6}>
+              {formattedTimestamp}
+            </Text>
+          </Box>
         )}
       </Paper>
     </Box>
