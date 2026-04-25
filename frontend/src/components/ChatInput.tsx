@@ -29,6 +29,7 @@ export function ChatInput({ backendReady, isLoading, onSubmit }: ChatInputProps)
           autosize
           minRows={1}
           maxRows={5}
+          disabled={false}
           value={value}
           onChange={(event) => setValue(event.currentTarget.value)}
           onKeyDown={(event) => {
