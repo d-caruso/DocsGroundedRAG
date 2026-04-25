@@ -16,21 +16,23 @@ class ApiClientError extends Error implements ApiError {
 }
 
 function getApiBaseUrl(): string {
-  const apiBaseUrl = import.meta.env.VITE_API_URL
-
-  if (!apiBaseUrl) {
-    throw new ApiClientError('VITE_API_URL is not configured', 'config_error')
-  }
-
-  return apiBaseUrl
+  return import.meta.env.VITE_API_URL || '/api'
 }
 
 function getQueryUrl(): string {
-  return new URL('/query', getApiBaseUrl()).toString()
+  const baseUrl = getApiBaseUrl()
+  if (baseUrl.startsWith('http')) {
+    return new URL('/query', baseUrl).toString()
+  }
+  return `${baseUrl}/query`
 }
 
 function getHealthUrl(): string {
-  return new URL('/health', getApiBaseUrl()).toString()
+  const baseUrl = getApiBaseUrl()
+  if (baseUrl.startsWith('http')) {
+    return new URL('/health', baseUrl).toString()
+  }
+  return `${baseUrl}/health`
 }
 
 function toApiError(error: unknown): ApiError {
