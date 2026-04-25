@@ -1,9 +1,9 @@
 export interface SourceChunkMetadata {
   source_file: string
   category: string
-  title: string
-  section: string
-  url: string
+  title: string | null
+  section: string | null
+  url: string | null
 }
 
 export interface SourceChunk {

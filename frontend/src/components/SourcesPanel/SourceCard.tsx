@@ -7,7 +7,8 @@ interface SourceCardProps {
 }
 
 export function SourceCard({ chunk }: SourceCardProps) {
-  const sectionLabel = chunk.metadata.section || chunk.metadata.category
+  const sectionLabel = chunk.metadata.section ?? chunk.metadata.category
+  const titleLabel = chunk.metadata.title ?? chunk.metadata.source_file
 
   return (
     <Card withBorder radius="lg" padding="md">
@@ -22,7 +23,7 @@ export function SourceCard({ chunk }: SourceCardProps) {
         </Group>
 
         <Text fw={600} size="sm">
-          {chunk.metadata.title}
+          {titleLabel}
         </Text>
 
         <Text size="sm" c="dimmed" lineClamp={3}>
