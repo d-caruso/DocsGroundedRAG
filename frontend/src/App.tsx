@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, AppShell, Box, Group, Stack, Text, Title } from '@mantine/core'
+import { ActionIcon, AppShell, Box, Group, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
@@ -92,6 +92,7 @@ function App() {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const isMobile = useMediaQuery('(max-width: 768px)')
   const sampleQueries = [
     'When should I use Checkout Sessions instead of Payment Intents?',
@@ -166,6 +167,44 @@ function App() {
               DocsGroundedRAG
             </Title>
           </Group>
+          <ActionIcon
+            size="lg"
+            radius="xl"
+            variant={colorScheme === 'dark' ? 'filled' : 'light'}
+            onClick={() => toggleColorScheme()}
+            aria-label="Toggle color scheme"
+            title="Toggle color scheme"
+          >
+            {colorScheme === 'dark' ? (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M13.2 11.2A5.8 5.8 0 1 1 6.8 4.8a6.8 6.8 0 1 0 6.4 6.4Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <circle cx="9" cy="9" r="3.75" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M9 2.5V1.25M9 16.75V15.5M15.5 9H16.75M1.25 9H2.5M13.35 4.65L14.2 3.8M3.8 14.2L4.65 13.35M13.35 13.35L14.2 14.2M3.8 3.8L4.65 4.65" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            )}
+          </ActionIcon>
           <ActionIcon
             size="lg"
             radius="xl"
