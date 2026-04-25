@@ -32,11 +32,18 @@ export interface ChatState {
   isLoading: boolean
   backendReady: boolean
   backendError: string | null
+  minSimilarity: number
 }
 
 export interface QueryRequest {
   query: string
+  min_similarity?: number
 }
+
+export const MIN_SIMILARITY_DEFAULT = 0.7
+export const MIN_SIMILARITY_MIN = 0.6
+export const MIN_SIMILARITY_MAX = 0.95
+export const MIN_SIMILARITY_STEP = 0.05
 
 export interface QueryResponse {
   answer: string

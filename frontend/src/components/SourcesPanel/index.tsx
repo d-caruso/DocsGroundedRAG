@@ -1,12 +1,52 @@
-import { AppShell, Drawer, ScrollArea, Stack, Text } from '@mantine/core'
+import { AppShell, Box, Drawer, ScrollArea, Slider, Stack, Text } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import type { Message, SourceChunk } from '../../types'
+import {
+  MIN_SIMILARITY_MAX,
+  MIN_SIMILARITY_MIN,
+  MIN_SIMILARITY_STEP,
+  type Message,
+  type SourceChunk,
+} from '../../types'
 import { SourceCard } from './SourceCard'
 
 interface SourcesPanelProps {
   messages: Message[]
   opened: boolean
   onClose: () => void
+  minSimilarity: number
+  onMinSimilarityChange: (value: number) => void
+  onMinSimilarityCommit: (value: number) => void
+}
+
+function MinSimilaritySlider({
+  value,
+  onChange,
+  onChangeEnd,
+}: {
+  value: number
+  onChange: (value: number) => void
+  onChangeEnd: (value: number) => void
+}) {
+  return (
+    <Box>
+      <Text size="xs" fw={600} mb={6}>
+        Minimum similarity: {value.toFixed(2)}
+      </Text>
+      <Slider
+        min={MIN_SIMILARITY_MIN}
+        max={MIN_SIMILARITY_MAX}
+        step={MIN_SIMILARITY_STEP}
+        value={value}
+        onChange={onChange}
+        onChangeEnd={onChangeEnd}
+        label={(v) => v.toFixed(2)}
+        marks={[
+          { value: MIN_SIMILARITY_MIN, label: MIN_SIMILARITY_MIN.toFixed(2) },
+          { value: MIN_SIMILARITY_MAX, label: MIN_SIMILARITY_MAX.toFixed(2) },
+        ]}
+      />
+    </Box>
+  )
 }
 
 function getLatestAssistantChunks(messages: Message[]): SourceChunk[] {
@@ -21,7 +61,14 @@ function getLatestAssistantChunks(messages: Message[]): SourceChunk[] {
   return []
 }
 
-export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
+export function SourcesPanel({
+  messages,
+  opened,
+  onClose,
+  minSimilarity,
+  onMinSimilarityChange,
+  onMinSimilarityCommit,
+}: SourcesPanelProps) {
   const isMobile = useMediaQuery('(max-width: 768px)')
 
   const chunks = getLatestAssistantChunks(messages)
@@ -31,11 +78,20 @@ export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
     </Text>
   )
 
+  const slider = (
+    <MinSimilaritySlider
+      value={minSimilarity}
+      onChange={onMinSimilarityChange}
+      onChangeEnd={onMinSimilarityCommit}
+    />
+  )
+
   if (isMobile) {
     return (
-      <Drawer opened={opened} onClose={onClose} position="right" size="md" title="Sources">
+      <Drawer opened={opened} onClose={onClose} position="right" size="md" title="Advanced">
         <ScrollArea.Autosize mah="70vh" offsetScrollbars>
           <Stack gap="md">
+            {slider}
             {chunks.length === 0 ? emptyState : chunks.map((chunk) => <SourceCard key={chunk.id} chunk={chunk} />)}
           </Stack>
         </ScrollArea.Autosize>
@@ -51,6 +107,7 @@ export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
     <AppShell.Aside p="md">
       <ScrollArea h="100%" offsetScrollbars>
         <Stack gap="md">
+          {slider}
           {chunks.length === 0 ? emptyState : chunks.map((chunk) => <SourceCard key={chunk.id} chunk={chunk} />)}
         </Stack>
       </ScrollArea>

@@ -90,11 +90,15 @@ export const mockQueryResponse: QueryResponse = {
   ],
 }
 
-export async function postQuery(question: string): Promise<QueryResponse> {
+export async function postQuery(
+  question: string,
+  minSimilarity?: number,
+): Promise<QueryResponse> {
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   const requestBody: QueryRequest = {
     query: question,
+    ...(minSimilarity !== undefined ? { min_similarity: minSimilarity } : {}),
   }
 
   try {

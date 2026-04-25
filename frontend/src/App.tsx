@@ -5,6 +5,7 @@ import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
 import { SourcesPanel } from './components/SourcesPanel'
+import { MIN_SIMILARITY_DEFAULT } from './types'
 import type { ChatState, Message, SourceChunk } from './types'
 import './App.css'
 
@@ -15,12 +16,14 @@ type ChatAction =
   | { type: 'SET_ERROR'; payload: { content: string } }
   | { type: 'SET_BACKEND_READY'; payload: { backendReady: boolean } }
   | { type: 'SET_BACKEND_ERROR'; payload: { backendError: string | null } }
+  | { type: 'SET_MIN_SIMILARITY'; payload: { minSimilarity: number } }
 
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
   backendReady: false,
   backendError: null,
+  minSimilarity: MIN_SIMILARITY_DEFAULT,
 }
 
 function createMessage(message: Omit<Message, 'id' | 'timestamp'>): Message {
@@ -90,6 +93,11 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...state,
         backendError: action.payload.backendError,
       }
+    case 'SET_MIN_SIMILARITY':
+      return {
+        ...state,
+        minSimilarity: action.payload.minSimilarity,
+      }
     default:
       return state
   }
@@ -135,9 +143,9 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const submitQuery = (value: string) => {
+  const submitQuery = (value: string, minSimilarity: number = state.minSimilarity) => {
     dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
-    postQuery(value)
+    postQuery(value, minSimilarity)
       .then((response) => {
         dispatch({
           type: 'RECEIVE_RESPONSE',
@@ -150,13 +158,32 @@ function App() {
       })
   }
 
-  const handleRetry = () => {
+  const findLastUserContent = (): string | null => {
     for (let index = state.messages.length - 1; index >= 0; index -= 1) {
       const message = state.messages[index]
       if (message.role === 'user') {
-        submitQuery(message.content)
-        return
+        return message.content
       }
+    }
+    return null
+  }
+
+  const handleRetry = () => {
+    const last = findLastUserContent()
+    if (last !== null) {
+      submitQuery(last)
+    }
+  }
+
+  const handleMinSimilarityChange = (value: number) => {
+    dispatch({ type: 'SET_MIN_SIMILARITY', payload: { minSimilarity: value } })
+  }
+
+  const handleMinSimilarityCommit = (value: number) => {
+    dispatch({ type: 'SET_MIN_SIMILARITY', payload: { minSimilarity: value } })
+    const last = findLastUserContent()
+    if (last !== null && state.backendReady && !state.isLoading) {
+      submitQuery(last, value)
     }
   }
 
@@ -314,6 +341,9 @@ function App() {
         messages={state.messages}
         opened={advancedOpen}
         onClose={() => setAdvancedOpen(false)}
+        minSimilarity={state.minSimilarity}
+        onMinSimilarityChange={handleMinSimilarityChange}
+        onMinSimilarityCommit={handleMinSimilarityCommit}
       />
     </AppShell>
   )
