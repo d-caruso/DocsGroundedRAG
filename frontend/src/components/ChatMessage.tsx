@@ -1,4 +1,6 @@
 import { ActionIcon, Alert, Box, Group, Paper, Text } from '@mantine/core'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Message } from '../types'
 
 interface ChatMessageProps {
@@ -8,6 +10,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message, onRetry }: ChatMessageProps) {
   const isUser = message.role === 'user'
+  const isAssistant = message.role === 'assistant'
 
   if (message.status === 'error') {
     return (
@@ -87,15 +90,28 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
         c={isUser ? 'white' : 'var(--mantine-color-text)'}
         shadow={isUser ? 'sm' : undefined}
       >
-        <Text
-          size="sm"
-          style={{
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'anywhere',
-          }}
-        >
-          {message.content}
-        </Text>
+        {isAssistant ? (
+          <Box
+            style={{
+              fontSize: 'var(--mantine-font-size-sm)',
+              overflowWrap: 'anywhere',
+            }}
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {message.content}
+            </ReactMarkdown>
+          </Box>
+        ) : (
+          <Text
+            size="sm"
+            style={{
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {message.content}
+          </Text>
+        )}
       </Paper>
     </Box>
   )
