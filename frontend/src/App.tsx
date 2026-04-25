@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef } from 'react'
 import { AppShell, Box, Group, Stack } from '@mantine/core'
+import { checkHealth } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
 import type { ChatState, Message, SourceChunk } from './types'
@@ -91,6 +92,12 @@ function App() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [state.messages.length])
+
+  useEffect(() => {
+    void checkHealth().then(() => {
+      dispatch({ type: 'SET_BACKEND_READY', payload: { backendReady: true } })
+    })
+  }, [])
 
   return (
     <AppShell
