@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Box, Code, Group, Paper, ScrollArea, Text } from '@mantine/core'
+import { ActionIcon, Alert, Box, Button, Code, Group, Paper, ScrollArea, Stack, Text } from '@mantine/core'
 import { CodeHighlight } from '@mantine/code-highlight'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
@@ -8,14 +8,17 @@ import type { Message } from '../types'
 interface ChatMessageProps {
   message: Message
   onRetry?: (message: Message) => void
+  onToggleSources?: () => void
+  sourcesCount?: number
 }
 
 const markdownComponents: Components = {
   code({ children, className, ...props }) {
     const language = className?.match(/language-(\w+)/)?.[1]
     const code = String(children).replace(/\n$/, '')
+    const isBlock = Boolean(language) || code.includes('\n')
 
-    if (!language) {
+    if (!isBlock) {
       return (
         <Code {...props}>
           {code}
@@ -23,11 +26,11 @@ const markdownComponents: Components = {
       )
     }
 
-    return <CodeHighlight code={code} language={language} />
+    return <CodeHighlight code={code} language={language ?? 'text'} />
   },
 }
 
-export function ChatMessage({ message, onRetry }: ChatMessageProps) {
+export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const isAssistant = message.role === 'assistant'
   const formattedTimestamp = new Intl.DateTimeFormat(undefined, {
@@ -163,22 +166,28 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
                 />
               </svg>
             </ActionIcon>
-            <ScrollArea.Autosize mah="60vh" type="scroll" offsetScrollbars>
-              <Box
-                style={{
-                  fontSize: 'var(--mantine-font-size-sm)',
-                  overflowWrap: 'anywhere',
-                  paddingTop: '1.75rem',
-                }}
-              >
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                  {message.content}
-                </ReactMarkdown>
-                <Text size="xs" c="dimmed" mt="sm">
-                  {formattedTimestamp}
-                </Text>
-              </Box>
-            </ScrollArea.Autosize>
+            <Stack gap="xs" pt="1.75rem">
+              {onToggleSources && sourcesCount && sourcesCount > 0 ? (
+                <Button variant="light" size="xs" onClick={onToggleSources} w="fit-content">
+                  Sources ({sourcesCount})
+                </Button>
+              ) : null}
+              <ScrollArea.Autosize mah="60vh" type="scroll" offsetScrollbars>
+                <Box
+                  style={{
+                    fontSize: 'var(--mantine-font-size-sm)',
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {message.content}
+                  </ReactMarkdown>
+                  <Text size="xs" c="dimmed" mt="sm">
+                    {formattedTimestamp}
+                  </Text>
+                </Box>
+              </ScrollArea.Autosize>
+            </Stack>
           </Box>
         ) : (
           <Box>

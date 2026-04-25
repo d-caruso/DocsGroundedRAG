@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, AppShell, Box, Group, Stack } from '@mantine/core'
-import { checkHealth } from './api/query'
+import { ActionIcon, AppShell, Box, Group, Stack, Text, Title } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
 import { SourcesPanel } from './components/SourcesPanel'
@@ -91,6 +92,7 @@ function App() {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const sampleQueries = [
     'When should I use Checkout Sessions instead of Payment Intents?',
     'How does Stripe describe the Payment Intents flow?',
@@ -107,6 +109,31 @@ function App() {
     })
   }, [])
 
+  const submitQuery = (value: string) => {
+    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } })
+    postQuery(value)
+      .then((response) => {
+        dispatch({
+          type: 'RECEIVE_RESPONSE',
+          payload: { content: response.answer, chunks: response.chunks },
+        })
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Something went wrong.'
+        dispatch({ type: 'SET_ERROR', payload: { content: message } })
+      })
+  }
+
+  const handleRetry = () => {
+    for (let index = state.messages.length - 1; index >= 0; index -= 1) {
+      const message = state.messages[index]
+      if (message.role === 'user') {
+        submitQuery(message.content)
+        return
+      }
+    }
+  }
+
   return (
     <AppShell
       header={{ height: 76 }}
@@ -116,9 +143,28 @@ function App() {
     >
       <AppShell.Header className="shell-header">
         <Group justify="space-between" h="100%" px="lg">
-          <Group gap="sm" aria-hidden="true">
-            <Box className="placeholder-block placeholder-mark" />
-            <Box className="placeholder-block placeholder-title" />
+          <Group gap="sm">
+            <Box
+              w={32}
+              h={32}
+              bg="blue.6"
+              style={{
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 700,
+              }}
+              aria-hidden="true"
+            >
+              <Text size="sm" c="white" fw={700}>
+                DG
+              </Text>
+            </Box>
+            <Title order={4} fw={600}>
+              DocsGroundedRAG
+            </Title>
           </Group>
           <ActionIcon
             size="lg"
@@ -156,6 +202,9 @@ function App() {
               bottomRef={bottomRef}
               sampleQueries={sampleQueries}
               onSampleSelect={setInputValue}
+              showSourcesToggle={isMobile}
+              onToggleSources={() => setAdvancedOpen((value) => !value)}
+              onRetry={handleRetry}
             />
           </Box>
           <Box className="surface-block composer-surface">
@@ -167,13 +216,18 @@ function App() {
               onSubmit={(value) => {
                 dispatch({ type: 'SEND_MESSAGE', payload: { content: value } })
                 setInputValue('')
+                submitQuery(value)
               }}
             />
           </Box>
         </Stack>
       </AppShell.Main>
 
-      <SourcesPanel messages={state.messages} opened={advancedOpen} />
+      <SourcesPanel
+        messages={state.messages}
+        opened={advancedOpen}
+        onClose={() => setAdvancedOpen(false)}
+      />
     </AppShell>
   )
 }
