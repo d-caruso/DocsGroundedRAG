@@ -1,11 +1,30 @@
-import { ActionIcon, Alert, Box, Group, Paper, Text } from '@mantine/core'
+import { ActionIcon, Alert, Box, Code, Group, Paper, Text } from '@mantine/core'
+import { CodeHighlight } from '@mantine/code-highlight'
 import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Message } from '../types'
 
 interface ChatMessageProps {
   message: Message
   onRetry?: (message: Message) => void
+}
+
+const markdownComponents: Components = {
+  code({ children, className, ...props }) {
+    const language = className?.match(/language-(\w+)/)?.[1]
+    const code = String(children).replace(/\n$/, '')
+
+    if (!language) {
+      return (
+        <Code {...props}>
+          {code}
+        </Code>
+      )
+    }
+
+    return <CodeHighlight code={code} language={language} />
+  },
 }
 
 export function ChatMessage({ message, onRetry }: ChatMessageProps) {
@@ -97,7 +116,7 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
               overflowWrap: 'anywhere',
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {message.content}
             </ReactMarkdown>
           </Box>
