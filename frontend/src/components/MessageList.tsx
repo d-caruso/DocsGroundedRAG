@@ -11,6 +11,8 @@ interface MessageListProps {
   onRetry?: (message: Message) => void
   sampleQueries?: string[]
   onSampleSelect?: (query: string) => void
+  onToggleSources?: () => void
+  showSourcesToggle?: boolean
 }
 
 function EmptyState({
@@ -54,14 +56,36 @@ export function MessageList({
   onRetry,
   sampleQueries = [],
   onSampleSelect,
+  onToggleSources,
+  showSourcesToggle = false,
 }: MessageListProps) {
+  const latestAssistantMessage = [...messages].reverse().find((message) => message.role === 'assistant')
+  const latestAssistantMessageId = latestAssistantMessage?.id
+  const latestAssistantSourcesCount = latestAssistantMessage?.chunks.length ?? 0
+
   return (
     <ScrollArea h="100%" offsetScrollbars>
       <Stack gap="md" p="md">
         {messages.length === 0 ? (
           <EmptyState sampleQueries={sampleQueries} onSampleSelect={onSampleSelect} />
         ) : (
-          messages.map((message) => <ChatMessage key={message.id} message={message} onRetry={onRetry} />)
+          messages.map((message) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              onRetry={onRetry}
+              onToggleSources={
+                showSourcesToggle && message.id === latestAssistantMessageId
+                  ? onToggleSources
+                  : undefined
+              }
+              sourcesCount={
+                showSourcesToggle && message.id === latestAssistantMessageId
+                  ? latestAssistantSourcesCount
+                  : undefined
+              }
+            />
+          ))
         )}
         {isLoading ? <SkeletonMessage /> : null}
         <Box ref={bottomRef} />
