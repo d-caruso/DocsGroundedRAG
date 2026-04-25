@@ -10,6 +10,10 @@ function getScoreColor(score: number): MantineColor {
     return 'green'
   }
 
+  if (score >= 0.75) {
+    return 'yellow'
+  }
+
   return 'yellow'
 }
 
