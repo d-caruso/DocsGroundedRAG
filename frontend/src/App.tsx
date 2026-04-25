@@ -1,5 +1,6 @@
-import { useEffect, useReducer, useRef } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { AppShell, Box, Group, Stack } from '@mantine/core'
+import { checkHealth } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
 import type { ChatState, Message, SourceChunk } from './types'
@@ -86,11 +87,23 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
 function App() {
   const [state, dispatch] = useReducer(chatReducer, initialState)
+  const [inputValue, setInputValue] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const sampleQueries = [
+    'When should I use Checkout Sessions instead of Payment Intents?',
+    'How does Stripe describe the Payment Intents flow?',
+    'What does Stripe say about the responsibilities of Checkout Sessions?',
+  ]
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [state.messages.length])
+
+  useEffect(() => {
+    void checkHealth().then(() => {
+      dispatch({ type: 'SET_BACKEND_READY', payload: { backendReady: true } })
+    })
+  }, [])
 
   return (
     <AppShell
@@ -113,13 +126,23 @@ function App() {
         <Stack gap="lg" style={{ flex: 1 }}>
           <Box className="surface-block hero-surface" />
           <Box className="surface-block conversation-surface">
-            <MessageList messages={state.messages} isLoading={state.isLoading} bottomRef={bottomRef} />
+            <MessageList
+              messages={state.messages}
+              isLoading={state.isLoading}
+              bottomRef={bottomRef}
+              sampleQueries={sampleQueries}
+              onSampleSelect={setInputValue}
+            />
           </Box>
           <Box className="surface-block composer-surface">
             <ChatInput
+              backendReady={state.backendReady}
               isLoading={state.isLoading}
+              value={inputValue}
+              onChange={setInputValue}
               onSubmit={(value) => {
                 dispatch({ type: 'SEND_MESSAGE', payload: { content: value } })
+                setInputValue('')
               }}
             />
           </Box>
