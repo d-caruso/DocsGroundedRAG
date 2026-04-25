@@ -1,14 +1,14 @@
-import { useState } from 'react'
 import { ActionIcon, Group, Loader, Paper, Textarea, Tooltip } from '@mantine/core'
 
 interface ChatInputProps {
   backendReady: boolean
   isLoading: boolean
+  value: string
+  onChange: (value: string) => void
   onSubmit: (value: string) => void
 }
 
-export function ChatInput({ backendReady, isLoading, onSubmit }: ChatInputProps) {
-  const [value, setValue] = useState('')
+export function ChatInput({ backendReady, isLoading, value, onChange, onSubmit }: ChatInputProps) {
   const buttonDisabled = !backendReady || isLoading || value.trim().length === 0
 
   const handleSubmit = () => {
@@ -19,7 +19,6 @@ export function ChatInput({ backendReady, isLoading, onSubmit }: ChatInputProps)
     }
 
     onSubmit(trimmedValue)
-    setValue('')
   }
 
   return (
@@ -31,7 +30,7 @@ export function ChatInput({ backendReady, isLoading, onSubmit }: ChatInputProps)
           maxRows={5}
           disabled={false}
           value={value}
-          onChange={(event) => setValue(event.currentTarget.value)}
+          onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
