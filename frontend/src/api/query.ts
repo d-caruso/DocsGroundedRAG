@@ -1,5 +1,7 @@
 import type { ApiError, ApiErrorCode, QueryRequest, QueryResponse } from '../types'
 
+const REQUEST_TIMEOUT_MS = 30000
+
 class ApiClientError extends Error implements ApiError {
   code: ApiErrorCode
   status?: number
@@ -33,6 +35,10 @@ function getHealthUrl(): string {
 function toApiError(error: unknown): ApiError {
   if (error instanceof ApiClientError) {
     return error
+  }
+
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return new ApiClientError('The request timed out', 'network_error')
   }
 
   if (error instanceof TypeError) {
@@ -85,6 +91,7 @@ export const mockQueryResponse: QueryResponse = {
 
 export async function postQuery(question: string): Promise<QueryResponse> {
   const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   const requestBody: QueryRequest = {
     query: question,
   }
@@ -111,6 +118,7 @@ export async function postQuery(question: string): Promise<QueryResponse> {
   } catch (error) {
     throw toApiError(error)
   } finally {
+    window.clearTimeout(timeoutId)
     controller.abort()
   }
 }
