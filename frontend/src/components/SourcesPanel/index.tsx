@@ -1,4 +1,4 @@
-import { AppShell, Drawer, ScrollArea, Stack } from '@mantine/core'
+import { AppShell, Drawer, ScrollArea, Stack, Text } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import type { Message, SourceChunk } from '../../types'
 import { SourceCard } from './SourceCard'
@@ -25,15 +25,18 @@ export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
   const isMobile = useMediaQuery('(max-width: 768px)')
 
   const chunks = getLatestAssistantChunks(messages)
+  const emptyState = (
+    <Text size="sm" c="dimmed">
+      No sources found — adjust the quality slider to lower the threshold
+    </Text>
+  )
 
   if (isMobile) {
     return (
       <Drawer opened={opened} onClose={onClose} position="right" size="md" title="Sources">
         <ScrollArea.Autosize mah="70vh" offsetScrollbars>
           <Stack gap="md">
-            {chunks.map((chunk) => (
-              <SourceCard key={chunk.id} chunk={chunk} />
-            ))}
+            {chunks.length === 0 ? emptyState : chunks.map((chunk) => <SourceCard key={chunk.id} chunk={chunk} />)}
           </Stack>
         </ScrollArea.Autosize>
       </Drawer>
@@ -48,9 +51,7 @@ export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
     <AppShell.Aside p="md">
       <ScrollArea h="100%" offsetScrollbars>
         <Stack gap="md">
-          {chunks.map((chunk) => (
-            <SourceCard key={chunk.id} chunk={chunk} />
-          ))}
+          {chunks.length === 0 ? emptyState : chunks.map((chunk) => <SourceCard key={chunk.id} chunk={chunk} />)}
         </Stack>
       </ScrollArea>
     </AppShell.Aside>
