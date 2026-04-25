@@ -1,8 +1,9 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { AppShell, Box, Group, Stack } from '@mantine/core'
+import { ActionIcon, AppShell, Box, Group, Stack } from '@mantine/core'
 import { checkHealth } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
+import { SourcesPanel } from './components/SourcesPanel'
 import type { ChatState, Message, SourceChunk } from './types'
 import './App.css'
 
@@ -87,6 +88,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
 function App() {
   const [state, dispatch] = useReducer(chatReducer, initialState)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const sampleQueries = [
@@ -118,7 +120,29 @@ function App() {
             <Box className="placeholder-block placeholder-mark" />
             <Box className="placeholder-block placeholder-title" />
           </Group>
-          <Box className="placeholder-block placeholder-action" aria-hidden="true" />
+          <ActionIcon
+            size="lg"
+            radius="xl"
+            variant={advancedOpen ? 'filled' : 'light'}
+            onClick={() => setAdvancedOpen((value) => !value)}
+            aria-label="Toggle advanced"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 5H14M4 9H14M4 13H14"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </ActionIcon>
         </Group>
       </AppShell.Header>
 
@@ -149,14 +173,7 @@ function App() {
         </Stack>
       </AppShell.Main>
 
-      <AppShell.Aside className="shell-aside" p="lg">
-        <Stack gap="md" aria-hidden="true">
-          <Box className="surface-block aside-header" />
-          <Box className="surface-block aside-card" />
-          <Box className="surface-block aside-card" />
-          <Box className="surface-block aside-card" />
-        </Stack>
-      </AppShell.Aside>
+      <SourcesPanel messages={state.messages} opened={advancedOpen} />
     </AppShell>
   )
 }
