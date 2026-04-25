@@ -8,6 +8,7 @@ interface MessageListProps {
   messages: Message[]
   isLoading: boolean
   bottomRef?: RefObject<HTMLDivElement | null>
+  onRetry?: (message: Message) => void
 }
 
 function EmptyState() {
@@ -22,11 +23,15 @@ function EmptyState() {
   )
 }
 
-export function MessageList({ messages, isLoading, bottomRef }: MessageListProps) {
+export function MessageList({ messages, isLoading, bottomRef, onRetry }: MessageListProps) {
   return (
     <ScrollArea h="100%" offsetScrollbars>
       <Stack gap="md" p="md">
-        {messages.length === 0 ? <EmptyState /> : messages.map((message) => <ChatMessage key={message.id} message={message} />)}
+        {messages.length === 0 ? (
+          <EmptyState />
+        ) : (
+          messages.map((message) => <ChatMessage key={message.id} message={message} onRetry={onRetry} />)
+        )}
         {isLoading ? <SkeletonMessage /> : null}
         <Box ref={bottomRef} />
       </Stack>
