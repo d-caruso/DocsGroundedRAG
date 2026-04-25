@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Box, Code, Group, Paper, Text } from '@mantine/core'
+import { ActionIcon, Alert, Box, Code, Group, Paper, ScrollArea, Text } from '@mantine/core'
 import { CodeHighlight } from '@mantine/code-highlight'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
@@ -110,16 +110,18 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
         shadow={isUser ? 'sm' : undefined}
       >
         {isAssistant ? (
-          <Box
-            style={{
-              fontSize: 'var(--mantine-font-size-sm)',
-              overflowWrap: 'anywhere',
-            }}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {message.content}
-            </ReactMarkdown>
-          </Box>
+          <ScrollArea.Autosize mah="60vh" type="scroll" offsetScrollbars>
+            <Box
+              style={{
+                fontSize: 'var(--mantine-font-size-sm)',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {message.content}
+              </ReactMarkdown>
+            </Box>
+          </ScrollArea.Autosize>
         ) : (
           <Text
             size="sm"
