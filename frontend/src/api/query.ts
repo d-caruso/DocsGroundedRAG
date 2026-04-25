@@ -1,6 +1,7 @@
 import type { ApiError, ApiErrorCode, QueryRequest, QueryResponse } from '../types'
 
 const REQUEST_TIMEOUT_MS = 30000
+const HEALTH_TIMEOUT_MS = 15000
 
 class ApiClientError extends Error implements ApiError {
   code: ApiErrorCode
@@ -125,6 +126,7 @@ export async function postQuery(question: string): Promise<QueryResponse> {
 
 export async function checkHealth(): Promise<void> {
   const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS)
 
   try {
     const response = await fetch(getHealthUrl(), {
@@ -142,6 +144,6 @@ export async function checkHealth(): Promise<void> {
   } catch (error) {
     throw toApiError(error)
   } finally {
-    controller.abort()
+    window.clearTimeout(timeoutId)
   }
 }

@@ -31,6 +31,7 @@ export interface ChatState {
   messages: Message[]
   isLoading: boolean
   backendReady: boolean
+  backendError: string | null
 }
 
 export interface QueryRequest {

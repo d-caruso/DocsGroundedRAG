@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, AppShell, Box, Group, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
+import { ActionIcon, Alert, AppShell, Box, Button, Group, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
@@ -14,11 +14,13 @@ type ChatAction =
   | { type: 'RECEIVE_RESPONSE'; payload: { content: string; chunks: SourceChunk[] } }
   | { type: 'SET_ERROR'; payload: { content: string } }
   | { type: 'SET_BACKEND_READY'; payload: { backendReady: boolean } }
+  | { type: 'SET_BACKEND_ERROR'; payload: { backendError: string | null } }
 
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
   backendReady: false,
+  backendError: null,
 }
 
 function createMessage(message: Omit<Message, 'id' | 'timestamp'>): Message {
@@ -81,6 +83,12 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         backendReady: action.payload.backendReady,
+        backendError: null,
+      }
+    case 'SET_BACKEND_ERROR':
+      return {
+        ...state,
+        backendError: action.payload.backendError,
       }
     default:
       return state
@@ -105,10 +113,26 @@ function App() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [state.messages.length])
 
+  const runHealthCheck = (attempt = 0) => {
+    dispatch({ type: 'SET_BACKEND_ERROR', payload: { backendError: null } })
+    checkHealth()
+      .then(() => {
+        dispatch({ type: 'SET_BACKEND_READY', payload: { backendReady: true } })
+      })
+      .catch((error: unknown) => {
+        if (attempt < 1) {
+          window.setTimeout(() => runHealthCheck(attempt + 1), 5000)
+          return
+        }
+        const message =
+          error instanceof Error ? error.message : 'Backend is unreachable.'
+        dispatch({ type: 'SET_BACKEND_ERROR', payload: { backendError: message } })
+      })
+  }
+
   useEffect(() => {
-    void checkHealth().then(() => {
-      dispatch({ type: 'SET_BACKEND_READY', payload: { backendReady: true } })
-    })
+    runHealthCheck()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const submitQuery = (value: string) => {
@@ -235,6 +259,26 @@ function App() {
 
       <AppShell.Main className="shell-main">
         <Stack gap="lg" style={{ flex: 1 }}>
+          {state.backendError ? (
+            <Alert
+              color="red"
+              variant="light"
+              radius="lg"
+              title="Backend unreachable"
+            >
+              <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
+                <Text size="sm">{state.backendError}</Text>
+                <Button
+                  size="xs"
+                  variant="filled"
+                  color="red"
+                  onClick={() => runHealthCheck()}
+                >
+                  Retry
+                </Button>
+              </Group>
+            </Alert>
+          ) : null}
           <Box className="surface-block hero-surface" />
           <Box className="surface-block conversation-surface">
             <MessageList

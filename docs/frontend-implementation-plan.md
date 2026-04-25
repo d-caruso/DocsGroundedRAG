@@ -13,6 +13,14 @@ The project has a complete RAG pipeline (chunking, embedding, retrieval, Gemini 
 
 Before any UI work is meaningful, the `/query` endpoint must return **richer data** than the scripts currently output. The current `rag_answer.py` returns `{answer, sources}` where `sources` is a list of filenames. The UI sources panel needs chunk-level detail.
 
+**Required `/query` request shape:**
+```json
+{
+  "query": "string — user question",
+  "min_similarity": 0.70  // optional, range 0.60–0.95, default 0.70
+}
+```
+
 **Required `/query` response shape:**
 ```json
 {
@@ -27,15 +35,20 @@ Before any UI work is meaningful, the `/query` endpoint must return **richer dat
         "source_file": "payments/payment-intents.md",
         "category": "payments",
         "title": "Creating a PaymentIntent",
-        "section": "Payment Intents",
-        "url": "https://stripe.com/docs/payments/payment-intents"
+        "section": null,
+        "url": null
       }
     }
   ]
 }
 ```
 
-This contract must be agreed before Phase 5 begins (Sources Panel). The frontend can mock it during development.
+**Key design decisions:**
+- `min_similarity` is a backend quality gate, not a post-response display filter. The LLM only sees chunks that pass the threshold; what the LLM sees is what gets returned.
+- Chunk count is variable (0–5): only chunks with `score >= min_similarity` are returned.
+- `title` is extracted from the first H1 heading in chunk content; `section` and `url` are not yet available from the ingestion pipeline (nullable for now).
+
+This contract is finalized. The frontend can mock it during development or use it against the live backend.
 
 ---
 
@@ -121,6 +134,11 @@ Gemini is instructed to be concise, but answers can still be multi-paragraph wit
 
 ```ts
 // src/types.ts
+interface QueryRequest {
+  query: string;
+  min_similarity?: number;  // optional, range 0.60–0.95, default 0.70
+}
+
 interface SourceChunk {
   id: string;
   score: number;
@@ -129,9 +147,9 @@ interface SourceChunk {
   metadata: {
     source_file: string;
     category: string;
-    title: string;
-    section: string;
-    url: string;
+    title: string | null;
+    section: string | null;
+    url: string | null;
   };
 }
 
@@ -150,6 +168,7 @@ interface ChatState {
   messages: Message[];
   isLoading: boolean;
   backendReady: boolean;  // false until health check resolves; gates send button
+  minSimilarity: number;  // default 0.70; user-adjustable, range 0.60–0.95
 }
 ```
 
@@ -209,7 +228,7 @@ frontend/
 | # | Task | Detail |
 |---|---|---|
 | 2.1 | Define `types.ts` | `Message`, `SourceChunk`, `ChatState`, `QueryRequest`, `QueryResponse` |
-| 2.2 | Write `api/query.ts` | `postQuery(question: string): Promise<QueryResponse>` using `fetch` with `AbortController` |
+| 2.2 | Write `api/query.ts` | `postQuery(question: string, minSimilarity?: number): Promise<QueryResponse>` using `fetch` with `AbortController` — passes `min_similarity` in request body if provided |
 | 2.3 | Write health check | `checkHealth(): Promise<void>` — `GET /health`, resolves on 200, rejects on error; called on mount to gate the send button |
 | 2.4 | Mock API response | Export `mockQueryResponse` fixture matching the contract — used during Phase 3 development before backend is ready |
 | 2.5 | Error normalisation | Convert HTTP errors and network errors to a uniform `ApiError` type |
@@ -247,18 +266,20 @@ frontend/
 
 ---
 
-### Phase 5 — Sources Panel
+### Phase 5 — Sources Panel (Collapsible + Advanced)
 **Depends on:** Phase 2 + Phase 3
 **Enables:** Phase 7
 **Parallel with:** Phase 4
 
 | # | Task | Detail |
 |---|---|---|
-| 5.1 | `SourceCard.tsx` | `Card` with: score `Badge` (green ≥ 0.85, yellow ≥ 0.70, grey < 0.70), section label, title, excerpt (`lineClamp=3`), "View source" `Anchor` |
-| 5.2 | `SourcesPanel/index.tsx` | Desktop: `AppShell.Aside` (fixed width 320px); always shows chunks from the **latest assistant message** |
-| 5.3 | Mobile drawer | Use `useMediaQuery('(max-width: 768px)')` to swap Aside → `Drawer`; trigger via a "Sources (N)" button in the assistant bubble |
-| 5.4 | Panel empty state | Dimmed text: "Sources will appear here after your first question" |
-| 5.5 | Score colour logic | Helper `scoreToColor(score: number): MantineColor` used in `SourceCard` badge |
+| 5.1 | `SourceCard.tsx` | `Card` with: score `Badge` (green ≥ 0.85, yellow 0.75–0.84, no grey since all returned chunks pass threshold), section label, title, excerpt (`lineClamp=3`), "View source" `Anchor` |
+| 5.2 | `SourcesPanel/index.tsx` | Desktop: `AppShell.Aside` hidden by default (inside "Advanced" toggle); shows chunks from the **latest assistant message** |
+| 5.3 | Advanced toggle | `Switch` or `ActionIcon` in footer or header; toggles visibility of sources panel + min_similarity slider |
+| 5.4 | min_similarity slider | Inside Advanced section; range 0.60–0.95, steps 0.05, default 0.70; **re-sends the query** with new threshold when changed |
+| 5.5 | Mobile drawer | Use `useMediaQuery('(max-width: 768px)')` to swap Aside → `Drawer` for the Advanced panel; "Sources (N)" button in assistant bubble toggles it |
+| 5.6 | Panel empty state | Dimmed text: "No sources found — adjust the quality slider to lower the threshold" |
+| 5.7 | Score colour logic | Helper `scoreToColor(score: number): MantineColor` used in `SourceCard` badge; only green and yellow (no grey) |
 
 ---
 

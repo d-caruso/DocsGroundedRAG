@@ -5,6 +5,50 @@ Follows the rules in `BRANCHING_STRATEGY.md`.
 
 ---
 
+## API Contract
+
+All frontend branching and task execution assumes the finalized `/query` contract from `docs/frontend-implementation-plan.md`.
+
+`/query` request shape:
+
+```json
+{
+  "query": "string",
+  "min_similarity": 0.70
+}
+```
+
+`/query` response shape:
+
+```json
+{
+  "answer": "string",
+  "chunks": [
+    {
+      "id": "string",
+      "score": 0.87,
+      "content": "string",
+      "excerpt": "string",
+      "metadata": {
+        "source_file": "payments/payment-intents.md",
+        "category": "payments",
+        "title": "Creating a PaymentIntent",
+        "section": null,
+        "url": null
+      }
+    }
+  ]
+}
+```
+
+Key assumptions:
+- `min_similarity` is a backend retrieval gate, not a frontend display filter
+- returned chunk count is variable (`0–5`)
+- `section` and `url` are nullable for now
+- Phase 5 slider changes re-send the query with a new `min_similarity`
+
+---
+
 ## Feature Branch
 
 ```
@@ -81,9 +125,11 @@ feature/frontend
 ├── feature/frontend-Phase5-sources-panel       ← parallel with Phase4, Phase6
 │   ├── task/frontend-Task5.1-source-card
 │   ├── task/frontend-Task5.2-sources-panel
-│   ├── task/frontend-Task5.3-mobile-drawer
-│   ├── task/frontend-Task5.4-panel-empty-state
-│   └── task/frontend-Task5.5-score-color
+│   ├── task/frontend-Task5.3-advanced-toggle
+│   ├── task/frontend-Task5.4-min-similarity-slider
+│   ├── task/frontend-Task5.5-mobile-drawer
+│   ├── task/frontend-Task5.6-panel-empty-state
+│   └── task/frontend-Task5.7-score-color
 │
 ├── feature/frontend-Phase6-long-response       ← parallel with Phase4, Phase5
 │   ├── task/frontend-Task6.1-markdown-render
@@ -177,7 +223,7 @@ After all tasks in each phase merge → merge Phase2 and Phase3 to `feature/fron
 
 ---
 
-### Phase 4 — Loading & UX | Phase 5 — Sources Panel | Phase 6 — Long Response
+### Phase 4 — Loading & UX | Phase 5 — Sources Panel (Collapsible + Advanced) | Phase 6 — Long Response
 
 **Prerequisite:** Phase 2 **and** Phase 3 both merged to `feature/frontend`
 **Parallel:** Phases 4, 5, and 6 run at the same time
@@ -215,9 +261,11 @@ git checkout -b feature/frontend-Phase6-long-response
 |---|---|---|
 | `task/frontend-Task5.1-source-card` | Phase5 | Phase5 |
 | `task/frontend-Task5.2-sources-panel` | Phase5 | Phase5 |
-| `task/frontend-Task5.3-mobile-drawer` | Phase5 | Phase5 |
-| `task/frontend-Task5.4-panel-empty-state` | Phase5 | Phase5 |
-| `task/frontend-Task5.5-score-color` | Phase5 | Phase5 |
+| `task/frontend-Task5.3-advanced-toggle` | Phase5 | Phase5 |
+| `task/frontend-Task5.4-min-similarity-slider` | Phase5 | Phase5 |
+| `task/frontend-Task5.5-mobile-drawer` | Phase5 | Phase5 |
+| `task/frontend-Task5.6-panel-empty-state` | Phase5 | Phase5 |
+| `task/frontend-Task5.7-score-color` | Phase5 | Phase5 |
 
 **Phase 6 tasks:**
 
@@ -290,7 +338,7 @@ Examples:
 [TASK] 2.3 add checkHealth fetch wrapper
 [TASK] 3.5 wire useReducer with chat actions
 [TASK] 4.2 send button warmup state with tooltip
-[TASK] 5.1 SourceCard with score badge and excerpt
+[TASK] 5.4 add min similarity slider requery
 [TASK] 6.1 add react-markdown renderer to assistant bubble
 [TASK] 7.5 add aria labels and role log to message list
 ```
