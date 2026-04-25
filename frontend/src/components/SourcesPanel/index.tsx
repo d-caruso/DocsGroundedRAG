@@ -1,4 +1,4 @@
-import { AppShell, Box, Drawer, ScrollArea, Slider, Stack, Text } from '@mantine/core'
+import { AppShell, Box, Drawer, Group, ScrollArea, Slider, Stack, Text } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import {
   MIN_SIMILARITY_MAX,
@@ -32,6 +32,14 @@ function MinSimilaritySlider({
       <Text size="xs" fw={600} mb={6}>
         Minimum similarity: {value.toFixed(2)}
       </Text>
+      <Group justify="space-between" mb={4}>
+        <Text size="xs" c="dimmed">
+          More results
+        </Text>
+        <Text size="xs" c="dimmed">
+          Higher relevance
+        </Text>
+      </Group>
       <Slider
         min={MIN_SIMILARITY_MIN}
         max={MIN_SIMILARITY_MAX}

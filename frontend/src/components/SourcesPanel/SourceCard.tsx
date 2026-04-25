@@ -1,6 +1,5 @@
 import { Anchor, Badge, Card, Group, Stack, Text } from '@mantine/core'
 import type { SourceChunk } from '../../types'
-import { scoreToColor } from './constants'
 
 interface SourceCardProps {
   chunk: SourceChunk
@@ -17,7 +16,7 @@ export function SourceCard({ chunk }: SourceCardProps) {
           <Text size="xs" c="dimmed">
             {sectionLabel}
           </Text>
-          <Badge color={scoreToColor(chunk.score)} variant="light">
+          <Badge variant="light" color="gray">
             {chunk.score.toFixed(2)}
           </Badge>
         </Group>

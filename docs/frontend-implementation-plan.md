@@ -71,7 +71,7 @@ This contract is finalized. The frontend can mock it during development or use i
 |---|---|---|
 | Panel container | `AppShell.Aside` (desktop) / `Drawer` (mobile) | Houses retrieved chunks |
 | Source card | `Card` | One card per returned chunk |
-| Score badge | `Badge` (color varies by score) | Visual retrieval confidence |
+| Score badge | `Badge` (neutral gray, numeric `score.toFixed(2)`) | Per-chunk retrieval score, shown verbatim |
 | Excerpt text | `Text` (lineClamp=3) | Truncated chunk preview |
 | Section label | `Text` (dimmed, size=xs) | category / section breadcrumb |
 | "View source" link | `Anchor` | Opens original Stripe docs URL |
@@ -145,8 +145,8 @@ interface SourceChunk {
   excerpt: string;
   content: string;
   metadata: {
-    source_file: string;
-    category: string;
+    source_file: string;       // never null
+    category: string;          // never null
     title: string | null;
     section: string | null;
     url: string | null;
@@ -167,8 +167,9 @@ interface Message {
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
-  backendReady: boolean;  // false until health check resolves; gates send button
-  minSimilarity: number;  // default 0.70; user-adjustable, range 0.60–0.95
+  backendReady: boolean;          // false until health check resolves; gates send button
+  backendError: string | null;    // health-check error after retry exhausted; surfaces as banner
+  minSimilarity: number;          // default 0.70; user-adjustable, range 0.60–0.95
 }
 ```
 
@@ -257,7 +258,7 @@ frontend/
 
 | # | Task | Detail |
 |---|---|---|
-| 4.1 | Health warm-up on mount | `useEffect` in `App.tsx`: call `checkHealth().then(() => dispatch({ type: 'SET_BACKEND_READY' }))` — sets `backendReady: true` when the backend responds |
+| 4.1 | Health warm-up on mount | `useEffect` in `App.tsx`: call `checkHealth().then(() => dispatch({ type: 'SET_BACKEND_READY' }))` — sets `backendReady: true` when the backend responds. `checkHealth` uses an `AbortController` with a 15s timeout. On rejection, `App.tsx` retries once after 5s; if the second attempt fails, `state.backendError` is set and a red `Alert` banner with a Retry button is shown above the conversation surface. The retry button re-runs the same `runHealthCheck()` flow. |
 | 4.2 | Send button warm-up state | `ChatInput` send `ActionIcon`: disabled + shows `Loader` when `!backendReady \|\| isLoading`; shows send icon otherwise; Mantine `Tooltip` wraps it with label *"Warming up…"* (visible only while disabled due to warm-up) |
 | 4.3 | Per-message error state | `ChatMessage` renders `Alert` (red, compact) when `message.status === 'error'`; includes retry affordance |
 | 4.4 | Input disabled state | `ChatInput` `Textarea` is always enabled; only the send button is gated |
@@ -273,13 +274,13 @@ frontend/
 
 | # | Task | Detail |
 |---|---|---|
-| 5.1 | `SourceCard.tsx` | `Card` with: score `Badge` (green ≥ 0.85, yellow 0.75–0.84, no grey since all returned chunks pass threshold), section label, title, excerpt (`lineClamp=3`), "View source" `Anchor` |
+| 5.1 | `SourceCard.tsx` | `Card` with: score `Badge` (neutral gray, numeric only — `score.toFixed(2)`), section label, title (falls back to `source_file` when `null`), excerpt (`lineClamp=3`), "View source" `Anchor` (rendered only when `url` is non-null) |
 | 5.2 | `SourcesPanel/index.tsx` | Desktop: `AppShell.Aside` hidden by default (inside "Advanced" toggle); shows chunks from the **latest assistant message** |
 | 5.3 | Advanced toggle | `Switch` or `ActionIcon` in footer or header; toggles visibility of sources panel + min_similarity slider |
-| 5.4 | min_similarity slider | Inside Advanced section; range 0.60–0.95, steps 0.05, default 0.70; **re-sends the query** with new threshold when changed |
+| 5.4 | min_similarity slider | Inside Advanced section; range 0.60–0.95, steps 0.05, default 0.70. Layout: numeric value label on top, `"More results"` / `"Higher relevance"` endpoint labels above the track (`Group justify="space-between"`), slider with marks at min/max below. **Re-sends the query** with new threshold on slider commit (`onChangeEnd`) when a previous user message exists. |
 | 5.5 | Mobile drawer | Use `useMediaQuery('(max-width: 768px)')` to swap Aside → `Drawer` for the Advanced panel; "Sources (N)" button in assistant bubble toggles it |
 | 5.6 | Panel empty state | Dimmed text: "No sources found — adjust the quality slider to lower the threshold" |
-| 5.7 | Score colour logic | Helper `scoreToColor(score: number): MantineColor` used in `SourceCard` badge; only green and yellow (no grey) |
+| 5.7 | Numeric badge | `SourceCard` `Badge` renders `score.toFixed(2)` in a neutral gray variant — no per-score color logic. Score color helper and color/threshold constants are intentionally not implemented. |
 
 ---
 

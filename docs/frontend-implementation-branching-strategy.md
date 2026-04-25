@@ -44,8 +44,8 @@ All frontend branching and task execution assumes the finalized `/query` contrac
 Key assumptions:
 - `min_similarity` is a backend retrieval gate, not a frontend display filter
 - returned chunk count is variable (`0–5`)
-- `section` and `url` are nullable for now
-- Phase 5 slider changes re-send the query with a new `min_similarity`
+- `metadata.title`, `metadata.section`, and `metadata.url` are all `string | null`; `metadata.source_file` and `metadata.category` are always non-null strings
+- Phase 5 slider changes re-send the query with a new `min_similarity` on `onChangeEnd` (commit), not on every drag tick
 
 ---
 
@@ -129,7 +129,7 @@ feature/frontend
 │   ├── task/frontend-Task5.4-min-similarity-slider
 │   ├── task/frontend-Task5.5-mobile-drawer
 │   ├── task/frontend-Task5.6-panel-empty-state
-│   └── task/frontend-Task5.7-score-color
+│   └── task/frontend-Task5.7-numeric-badge
 │
 ├── feature/frontend-Phase6-long-response       ← parallel with Phase4, Phase5
 │   ├── task/frontend-Task6.1-markdown-render
@@ -265,7 +265,7 @@ git checkout -b feature/frontend-Phase6-long-response
 | `task/frontend-Task5.4-min-similarity-slider` | Phase5 | Phase5 |
 | `task/frontend-Task5.5-mobile-drawer` | Phase5 | Phase5 |
 | `task/frontend-Task5.6-panel-empty-state` | Phase5 | Phase5 |
-| `task/frontend-Task5.7-score-color` | Phase5 | Phase5 |
+| `task/frontend-Task5.7-numeric-badge` | Phase5 | Phase5 |
 
 **Phase 6 tasks:**
 
