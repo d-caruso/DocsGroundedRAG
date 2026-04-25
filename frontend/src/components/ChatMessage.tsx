@@ -110,18 +110,64 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
         shadow={isUser ? 'sm' : undefined}
       >
         {isAssistant ? (
-          <ScrollArea.Autosize mah="60vh" type="scroll" offsetScrollbars>
-            <Box
+          <Box
+            style={{
+              position: 'relative',
+            }}
+          >
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              aria-label="Copy answer"
+              onClick={() => {
+                void navigator.clipboard.writeText(message.content)
+              }}
               style={{
-                fontSize: 'var(--mantine-font-size-sm)',
-                overflowWrap: 'anywhere',
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                zIndex: 1,
               }}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {message.content}
-              </ReactMarkdown>
-            </Box>
-          </ScrollArea.Autosize>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M6 2.5H11.5C12.0523 2.5 12.5 2.94772 12.5 3.5V11"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <rect
+                  x="3.5"
+                  y="5.5"
+                  width="7"
+                  height="8"
+                  rx="1"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            </ActionIcon>
+            <ScrollArea.Autosize mah="60vh" type="scroll" offsetScrollbars>
+              <Box
+                style={{
+                  fontSize: 'var(--mantine-font-size-sm)',
+                  overflowWrap: 'anywhere',
+                  paddingTop: '1.75rem',
+                }}
+              >
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {message.content}
+                </ReactMarkdown>
+              </Box>
+            </ScrollArea.Autosize>
+          </Box>
         ) : (
           <Text
             size="sm"
