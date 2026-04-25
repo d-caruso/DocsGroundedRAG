@@ -92,6 +92,7 @@ function App() {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const inputFocusRef = useRef<HTMLTextAreaElement | null>(null)
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const isMobile = useMediaQuery('(max-width: 768px)')
   const sampleQueries = [
@@ -211,6 +212,7 @@ function App() {
             variant={advancedOpen ? 'filled' : 'light'}
             onClick={() => setAdvancedOpen((value) => !value)}
             aria-label="Toggle advanced"
+            title="Toggle advanced"
           >
             <svg
               width="18"
@@ -256,7 +258,9 @@ function App() {
                 dispatch({ type: 'SEND_MESSAGE', payload: { content: value } })
                 setInputValue('')
                 submitQuery(value)
+                inputFocusRef.current?.focus()
               }}
+              inputRef={inputFocusRef}
             />
           </Box>
         </Stack>

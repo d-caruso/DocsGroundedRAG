@@ -65,7 +65,7 @@ export function MessageList({
 
   return (
     <ScrollArea h="100%" offsetScrollbars>
-      <Stack gap="md" p="md">
+      <Stack gap="md" p="md" role="log" aria-live="polite" aria-relevant="additions text">
         {messages.length === 0 ? (
           <EmptyState sampleQueries={sampleQueries} onSampleSelect={onSampleSelect} />
         ) : (

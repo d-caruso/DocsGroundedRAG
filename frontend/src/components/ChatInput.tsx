@@ -1,4 +1,5 @@
 import { ActionIcon, Group, Loader, Paper, Textarea, Tooltip } from '@mantine/core'
+import { useEffect, useRef, type RefObject } from 'react'
 
 interface ChatInputProps {
   backendReady: boolean
@@ -6,10 +7,25 @@ interface ChatInputProps {
   value: string
   onChange: (value: string) => void
   onSubmit: (value: string) => void
+  inputRef?: RefObject<HTMLTextAreaElement | null>
 }
 
-export function ChatInput({ backendReady, isLoading, value, onChange, onSubmit }: ChatInputProps) {
+export function ChatInput({
+  backendReady,
+  isLoading,
+  value,
+  onChange,
+  onSubmit,
+  inputRef,
+}: ChatInputProps) {
+  const internalInputRef = useRef<HTMLTextAreaElement | null>(null)
   const buttonDisabled = !backendReady || isLoading || value.trim().length === 0
+
+  useEffect(() => {
+    if (!isLoading) {
+      (inputRef ?? internalInputRef).current?.focus()
+    }
+  }, [inputRef, isLoading])
 
   const handleSubmit = () => {
     const trimmedValue = value.trim()
@@ -25,6 +41,7 @@ export function ChatInput({ backendReady, isLoading, value, onChange, onSubmit }
     <Paper withBorder radius="xl" p="sm">
       <Group align="flex-end" gap="sm" wrap="nowrap">
         <Textarea
+          ref={inputRef ?? internalInputRef}
           autosize
           minRows={1}
           maxRows={5}
@@ -37,7 +54,7 @@ export function ChatInput({ backendReady, isLoading, value, onChange, onSubmit }
               handleSubmit()
             }
           }}
-          placeholder=""
+          placeholder="Ask about the indexed Stripe documentation..."
           style={{ flex: 1 }}
         />
 

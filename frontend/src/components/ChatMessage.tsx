@@ -73,6 +73,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
               variant="subtle"
               color="red"
               onClick={() => onRetry?.(message)}
+              aria-label="Retry message"
             >
               <svg
                 width="16"
