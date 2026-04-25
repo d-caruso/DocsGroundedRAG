@@ -21,12 +21,14 @@ def init() -> None:
     _generation_model = genai.GenerativeModel(GENERATION_MODEL_NAME)
 
 
-def _retrieve(pool: ConnectionPool, query: str) -> list[tuple[str, dict, float]]:
+def _retrieve(
+    pool: ConnectionPool, query: str, min_similarity: float
+) -> list[dict]:
     query_emb = _embedding_model.encode(query).tolist()
     with pool.connection() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            select content, metadata, 1 - (embedding <=> %s::vector) as score
+            select id, content, metadata, 1 - (embedding <=> %s::vector) as score
             from chunks
             order by embedding <=> %s::vector
             limit %s
@@ -36,22 +38,33 @@ def _retrieve(pool: ConnectionPool, query: str) -> list[tuple[str, dict, float]]
         rows = cur.fetchall()
 
     seen: set[str] = set()
-    unique: list[tuple[str, dict, float]] = []
-    for content, metadata, score in rows:
+    unique: list[dict] = []
+    for chunk_id, content, metadata, score in rows:
+        score = float(score)
+        if score < min_similarity:
+            continue
         source = metadata["source_file"]
         if source not in seen:
             seen.add(source)
-            unique.append((content, metadata, float(score)))
+            unique.append(
+                {
+                    "id": chunk_id,
+                    "content": content,
+                    "metadata": metadata,
+                    "score": score,
+                }
+            )
     return unique[:TOP_K]
 
 
-def _build_prompt(query: str, retrieved: list[tuple[str, dict, float]]) -> str:
+def _build_prompt(query: str, retrieved: list[dict]) -> str:
     context_parts = []
-    for i, (content, metadata, score) in enumerate(retrieved, start=1):
-        source = metadata["source_file"]
-        category = metadata["category"]
+    for i, chunk in enumerate(retrieved, start=1):
+        source = chunk["metadata"]["source_file"]
+        category = chunk["metadata"]["category"]
+        score = chunk["score"]
         context_parts.append(
-            f"[Source {i} | score={score:.4f} | file={source} | category={category}]\n{content}"
+            f"[Source {i} | score={score:.4f} | file={source} | category={category}]\n{chunk['content']}"
         )
     context = "\n\n---\n\n".join(context_parts)
 
@@ -95,13 +108,24 @@ def _strip_json_fences(raw: str) -> str:
     return raw
 
 
-def answer_query(pool: ConnectionPool, query: str) -> dict:
-    retrieved = _retrieve(pool, query)
+def _extract_title(content: str) -> str | None:
+    for line in content.splitlines():
+        line = line.strip()
+        if line.startswith("# "):
+            return line.lstrip("# ").strip()
+    return None
 
-    if not retrieved or retrieved[0][2] < MIN_SIMILARITY:
+
+def answer_query(
+    pool: ConnectionPool, query: str, min_similarity: float | None = None
+) -> dict:
+    threshold = min_similarity if min_similarity is not None else MIN_SIMILARITY
+    retrieved = _retrieve(pool, query, threshold)
+
+    if not retrieved:
         return {
             "answer": "I could not find this information in the provided documentation.",
-            "sources": [],
+            "chunks": [],
         }
 
     prompt = _build_prompt(query, retrieved)
@@ -113,18 +137,26 @@ def answer_query(pool: ConnectionPool, query: str) -> dict:
     except json.JSONDecodeError:
         return {
             "answer": "The model returned a response that could not be parsed. Please try again.",
-            "sources": [],
+            "chunks": [],
         }
 
     used = set(parsed.get("sources", []))
-    sources = [
+    chunks = [
         {
-            "file": metadata["source_file"],
-            "category": metadata["category"],
-            "score": score,
+            "id": c["id"],
+            "score": c["score"],
+            "content": c["content"],
+            "excerpt": c["content"][:200].rstrip(),
+            "metadata": {
+                "source_file": c["metadata"]["source_file"],
+                "category": c["metadata"]["category"],
+                "title": _extract_title(c["content"]),
+                "section": None,
+                "url": None,
+            },
         }
-        for _, metadata, score in retrieved
-        if metadata["source_file"] in used
+        for c in retrieved
+        if c["metadata"]["source_file"] in used
     ]
 
-    return {"answer": parsed.get("answer", ""), "sources": sources}
+    return {"answer": parsed.get("answer", ""), "chunks": chunks}

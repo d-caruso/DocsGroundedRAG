@@ -37,17 +37,28 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500)
+    min_similarity: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
-class Source(BaseModel):
-    file: str
+class ChunkMetadata(BaseModel):
+    source_file: str
     category: str
+    title: str | None = None
+    section: str | None = None
+    url: str | None = None
+
+
+class Chunk(BaseModel):
+    id: str
     score: float
+    content: str
+    excerpt: str
+    metadata: ChunkMetadata
 
 
 class QueryResponse(BaseModel):
     answer: str
-    sources: list[Source]
+    chunks: list[Chunk]
 
 
 @app.get("/")
@@ -63,4 +74,4 @@ def health():
 @app.post("/query", response_model=QueryResponse)
 @limiter.limit("10/minute")
 def query(request: Request, body: QueryRequest):
-    return rag.answer_query(get_pool(), body.query)
+    return rag.answer_query(get_pool(), body.query, body.min_similarity)
