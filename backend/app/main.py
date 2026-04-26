@@ -29,6 +29,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://dgrag.domenicocaruso.com",
+        "https://docs-grounded-rag.vercel.app",
     ],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
