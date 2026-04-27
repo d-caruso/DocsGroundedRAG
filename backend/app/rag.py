@@ -143,7 +143,7 @@ def answer_query(
     used = set(parsed.get("sources", []))
     chunks = [
         {
-            "id": c["id"],
+            "id": str(c["id"]),
             "score": c["score"],
             "content": c["content"],
             "excerpt": c["content"][:200].rstrip(),
