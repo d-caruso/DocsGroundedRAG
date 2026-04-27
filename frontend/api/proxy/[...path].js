@@ -8,12 +8,17 @@ export default async function handler(req) {
 
   const response = await fetch(target, {
     method: req.method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      'authorization': `Bearer ${process.env.HF_TOKEN}`,
+    },
     body: req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined,
   })
 
   return new Response(response.body, {
     status: response.status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'content-type': response.headers.get('content-type') ?? 'application/json',
+    },
   })
 }
