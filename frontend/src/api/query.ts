@@ -16,7 +16,7 @@ class ApiClientError extends Error implements ApiError {
 }
 
 function getApiBaseUrl(): string {
-  return import.meta.env.VITE_API_URL || '/api/proxy'
+  return import.meta.env.VITE_API_URL || '/api'
 }
 
 function getQueryUrl(): string {
