@@ -109,7 +109,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
     <Box
       style={{
         display: 'flex',
-        justifyContent: isUser ? 'flex-end' : 'flex-start',
+        justifyContent: isUser ? 'flex-start' : 'flex-end',
       }}
     >
       <Paper
@@ -118,7 +118,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
         py="sm"
         maw={720}
         withBorder={!isUser}
-        bg={isUser ? 'blue.6' : 'var(--mantine-color-body)'}
+        bg={isUser ? 'blue.6' : 'blue.0'}
         c={isUser ? 'white' : 'var(--mantine-color-text)'}
         shadow={isUser ? 'sm' : undefined}
       >

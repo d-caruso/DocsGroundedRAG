@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, Alert, AppShell, Box, Button, Group, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
+import { ActionIcon, Alert, AppShell, Badge, Box, Button, Center, Group, Loader, Stack, Text, Title, Tooltip, useMantineColorScheme } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
@@ -237,9 +237,10 @@ function App() {
                 aria-hidden="true"
               >
                 <path
-                  d="M13.2 11.2A5.8 5.8 0 1 1 6.8 4.8a6.8 6.8 0 1 0 6.4 6.4Z"
+                  d="M16.3 11.25a7.3 7.3 0 0 1-3.8 1.06A7.31 7.31 0 0 1 5.19 5a7.3 7.3 0 0 1 1.06-3.8A7.31 7.31 0 0 0 2.25 9a6.75 6.75 0 0 0 13.5 0 7.3 7.3 0 0 1-.45 2.25Z"
                   stroke="currentColor"
                   strokeWidth="1.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -257,35 +258,11 @@ function App() {
               </svg>
             )}
           </ActionIcon>
-          <ActionIcon
-            size="lg"
-            radius="xl"
-            variant={advancedOpen ? 'filled' : 'light'}
-            onClick={() => setAdvancedOpen((value) => !value)}
-            aria-label="Toggle advanced"
-            title="Toggle advanced"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M4 5H14M4 9H14M4 13H14"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </ActionIcon>
         </Group>
       </AppShell.Header>
 
       <AppShell.Main className="shell-main">
-        <Stack gap="lg" style={{ flex: 1 }}>
+        <Stack gap="lg" style={{ flex: 1 }} maw={860} mx="auto" w="100%">
           {state.backendError ? (
             <Alert
               color="red"
@@ -306,21 +283,48 @@ function App() {
               </Group>
             </Alert>
           ) : null}
-          <Box className="surface-block hero-surface" />
-          <Box className="surface-block conversation-surface">
+          <Box className="surface-block hero-surface">
+            <Stack gap="xs" p="xl" justify="center" style={{ height: '100%' }}>
+              <Title order={2} fw={700}>
+                DocsGroundedRAG
+              </Title>
+              <Text size="md" c="dimmed" maw={560}>
+                Ask questions about Stripe API documentation. Answers are grounded
+                strictly in the source text — no hallucinations, no guessing.
+              </Text>
+              <Group gap="xs" mt="xs">
+                <Badge variant="light" color="blue" size="sm">Stripe Docs</Badge>
+                <Badge variant="light" color="violet" size="sm">Gemini 2.5 Flash Lite</Badge>
+              </Group>
+            </Stack>
+          </Box>
+          <Box className="surface-block conversation-surface" style={{ position: 'relative' }}>
+            {state.isLoading && (
+              <Center
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 10,
+                  borderRadius: 18,
+                  backgroundColor: 'var(--mantine-color-body)',
+                  opacity: 0.85,
+                }}
+              >
+                <Loader size="lg" />
+              </Center>
+            )}
             <MessageList
               messages={state.messages}
               isLoading={state.isLoading}
               bottomRef={bottomRef}
-              sampleQueries={sampleQueries}
-              onSampleSelect={setInputValue}
               showSourcesToggle={isMobile}
               onToggleSources={() => setAdvancedOpen((value) => !value)}
               onRetry={handleRetry}
             />
           </Box>
           <Box className="surface-block composer-surface">
-            <ChatInput
+            <Stack gap="xs">
+              <ChatInput
               backendReady={state.backendReady}
               isLoading={state.isLoading}
               value={inputValue}
@@ -333,6 +337,52 @@ function App() {
               }}
               inputRef={inputFocusRef}
             />
+            <Stack gap="xs">
+              {sampleQueries.map((query) => (
+                <Button
+                  key={query}
+                  variant="default"
+                  size="xs"
+                  radius="xl"
+                  fullWidth
+                  onClick={() => setInputValue(query)}
+                  styles={{ label: { whiteSpace: 'normal', textAlign: 'left' } }}
+                >
+                  {query}
+                </Button>
+              ))}
+            </Stack>
+            <Group justify="center">
+              <Tooltip label={advancedOpen ? 'Hide sources & settings' : 'Show sources & settings'}>
+                <ActionIcon
+                  size="md"
+                  radius="xl"
+                  variant={advancedOpen ? 'filled' : 'subtle'}
+                  onClick={() => setAdvancedOpen((value) => !value)}
+                  aria-label="Toggle sources and settings"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M3 4.5H7.5M11.5 4.5H15M3 9H6M10 9H15M3 13.5H7.5M11.5 13.5H15"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <circle cx="9.5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.5" />
+                    <circle cx="8" cy="9" r="2" stroke="currentColor" strokeWidth="1.5" />
+                    <circle cx="9.5" cy="13.5" r="2" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+            </Stack>
           </Box>
         </Stack>
       </AppShell.Main>
