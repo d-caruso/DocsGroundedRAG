@@ -109,7 +109,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
     <Box
       style={{
         display: 'flex',
-        justifyContent: isUser ? 'flex-end' : 'flex-start',
+        justifyContent: isUser ? 'flex-start' : 'flex-end',
       }}
     >
       <Paper
