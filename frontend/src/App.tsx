@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, Alert, AppShell, Badge, Box, Button, Center, Group, Loader, Slider, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
+import { ActionIcon, Alert, AppShell, Box, Button, Center, Group, List, Loader, Modal, Slider, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
@@ -75,7 +76,8 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
 function App() {
   const [state, dispatch] = useReducer(chatReducer, initialState)
-const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState('')
+  const [helpOpened, { open: openHelp, close: closeHelp }] = useDisclosure(false)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const inputFocusRef = useRef<HTMLTextAreaElement | null>(null)
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
@@ -159,7 +161,7 @@ const colorSchemeIcon = colorScheme === 'dark' ? (
       className="app-shell"
     >
       <AppShell.Main className="shell-main">
-        <Stack gap="lg" maw={860} mx="auto">
+        <Stack gap="sm" maw={860} mx="auto">
           {state.backendError ? (
             <Alert color="red" variant="light" radius="lg" title="Backend unreachable">
               <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
@@ -171,20 +173,23 @@ const colorSchemeIcon = colorScheme === 'dark' ? (
             </Alert>
           ) : null}
 
-          {/* Hero card: logo + title + dark-mode toggle + description + badges */}
+          {/* Hero card */}
           <Box className="surface-block hero-surface">
-            <Stack gap="xs" p="xl">
-              <Group justify="space-between" align="center">
-                <Group gap="sm">
-                  <Box
-                    w={32} h={32} bg="blue.6"
-                    style={{ borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    aria-hidden="true"
-                  >
-                    <Text size="sm" c="white" fw={700}>DG</Text>
-                  </Box>
-                  <Title order={2} fw={700}>DocsGroundedRAG</Title>
-                </Group>
+            <Group justify="space-between" align="center" p="md" wrap="nowrap">
+              <Group gap="sm" align="center">
+                <Box
+                  w={32} h={32} bg="blue.6"
+                  style={{ borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  aria-hidden="true"
+                >
+                  <Text size="sm" c="white" fw={700}>DG</Text>
+                </Box>
+                <div>
+                  <Title order={3} fw={700} lh={1.2}>DocsGroundedRAG</Title>
+                  <Text size="xs" c="dimmed">Stripe Docs · Gemini 2.5 Flash Lite</Text>
+                </div>
+              </Group>
+              <Group gap="xs">
                 <ActionIcon
                   size="lg"
                   radius="xl"
@@ -194,20 +199,25 @@ const colorSchemeIcon = colorScheme === 'dark' ? (
                 >
                   {colorSchemeIcon}
                 </ActionIcon>
+                <ActionIcon
+                  size="lg"
+                  radius="xl"
+                  variant="light"
+                  onClick={openHelp}
+                  aria-label="Help"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M6.5 6C6.5 5.17157 7.17157 4.5 8 4.5C8.82843 4.5 9.5 5.17157 9.5 6C9.5 6.82843 8.82843 7.5 8 7.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="8" cy="11" r="0.75" fill="currentColor" />
+                  </svg>
+                </ActionIcon>
               </Group>
-              <Text size="md" c="dimmed" maw={560}>
-                Ask questions about Stripe API documentation. Answers are grounded
-                strictly in the source text — no hallucinations, no guessing.
-              </Text>
-              <Group gap="xs" mt="xs">
-                <Badge variant="light" color="blue" size="sm">Stripe Docs</Badge>
-                <Badge variant="light" color="violet" size="sm">Gemini 2.5 Flash Lite</Badge>
-              </Group>
-            </Stack>
+            </Group>
           </Box>
 
           {/* Conversation area */}
-          <Box className="surface-block conversation-surface" style={{ position: 'relative' }}>
+          <Box className="surface-block conversation-surface" style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
             {state.isLoading && (
               <Center
                 style={{
@@ -230,9 +240,9 @@ const colorSchemeIcon = colorScheme === 'dark' ? (
             />
           </Box>
 
-          {/* Composer: input + sample chips + settings toggle */}
+          {/* Composer */}
           <Box className="surface-block composer-surface">
-            <Stack gap="xs">
+            <Stack gap="xs" p="xs">
               <ChatInput
                 backendReady={state.backendReady}
                 isLoading={state.isLoading}
@@ -281,6 +291,32 @@ const colorSchemeIcon = colorScheme === 'dark' ? (
         </Stack>
       </AppShell.Main>
 
+      <Modal opened={helpOpened} onClose={closeHelp} title="About DocsGroundedRAG" size="md" radius="lg">
+        <Stack gap="md">
+          <Text size="sm">
+            DocsGroundedRAG is a retrieval-augmented generation (RAG) assistant built on top of the
+            official Stripe API documentation. It answers your questions using only text found in
+            the docs — it never generates information that isn't there.
+          </Text>
+          <div>
+            <Text size="sm" fw={600} mb={4}>How it works</Text>
+            <List size="sm" spacing={4}>
+              <List.Item>Your question is embedded and matched against indexed Stripe doc chunks.</List.Item>
+              <List.Item>Only chunks above the similarity threshold are passed to the LLM.</List.Item>
+              <List.Item>The LLM (Gemini 2.5 Flash Lite) synthesises an answer strictly from those chunks.</List.Item>
+            </List>
+          </div>
+          <div>
+            <Text size="sm" fw={600} mb={4}>Similarity slider</Text>
+            <Text size="sm">
+              Controls the minimum cosine similarity a document chunk must reach to be included as
+              context. Lower values → more chunks, broader answers, possible noise. Higher values →
+              fewer chunks, tighter answers, possible gaps when the question is phrased differently
+              from the docs.
+            </Text>
+          </div>
+        </Stack>
+      </Modal>
     </AppShell>
   )
 }

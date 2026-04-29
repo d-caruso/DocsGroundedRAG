@@ -37,22 +37,22 @@
 }
 
 .surface-block {
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background-color: rgba(235, 240, 247, 0.92);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background-color: rgba(210, 220, 235, 0.95);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
 }
 
 .hero-surface {
-  min-height: 10rem;
+  min-height: 6rem;
 }
 
 .conversation-surface {
-  min-height: 24rem;
-  padding: 1.5rem;
+  height: 55vh;
+  overflow: hidden;
 }
 
 .composer-surface {
-  min-height: 5.5rem;
+  min-height: 4rem;
 }
 
 .placeholder-line {
