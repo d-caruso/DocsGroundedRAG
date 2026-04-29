@@ -129,7 +129,12 @@ def answer_query(
         }
 
     prompt = _build_prompt(query, retrieved)
-    response = _generation_model.generate_content(prompt)
+    response = _generation_model.generate_content(
+        prompt,
+        generation_config=genai.GenerationConfig(
+            thinking_config=genai.types.ThinkingConfig(thinking_budget=0)
+        ),
+    )
     raw = _strip_json_fences(response.text)
 
     try:
