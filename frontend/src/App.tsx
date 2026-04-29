@@ -1,10 +1,8 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, Alert, AppShell, Badge, Box, Button, Center, Group, Loader, Slider, Stack, Text, Title, Tooltip, useMantineColorScheme } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { ActionIcon, Alert, AppShell, Badge, Box, Button, Center, Group, Loader, Slider, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
 import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
-import { SourcesPanel } from './components/SourcesPanel'
 import { MIN_SIMILARITY_DEFAULT, MIN_SIMILARITY_MIN, MIN_SIMILARITY_MAX, MIN_SIMILARITY_STEP } from './types'
 import type { ChatState, Message, SourceChunk } from './types'
 import './App.css'
@@ -77,13 +75,11 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
 function App() {
   const [state, dispatch] = useReducer(chatReducer, initialState)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [inputValue, setInputValue] = useState('')
+const [inputValue, setInputValue] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const inputFocusRef = useRef<HTMLTextAreaElement | null>(null)
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
-  const isMobile = useMediaQuery('(max-width: 768px)')
-  const sampleQueries = [
+const sampleQueries = [
     'When should I use Checkout Sessions instead of Payment Intents?',
     'How does Stripe describe the Payment Intents flow?',
     'What does Stripe say about the responsibilities of Checkout Sessions?',
@@ -143,15 +139,7 @@ function App() {
     dispatch({ type: 'SET_MIN_SIMILARITY', payload: { minSimilarity: value } })
   }
 
-  const handleMinSimilarityCommit = (value: number) => {
-    dispatch({ type: 'SET_MIN_SIMILARITY', payload: { minSimilarity: value } })
-    const last = findLastUserContent()
-    if (last !== null && state.backendReady && !state.isLoading) {
-      submitQuery(last, value)
-    }
-  }
-
-  const colorSchemeIcon = colorScheme === 'dark' ? (
+const colorSchemeIcon = colorScheme === 'dark' ? (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path
         d="M16.3 11.25a7.3 7.3 0 0 1-3.8 1.06A7.31 7.31 0 0 1 5.19 5a7.3 7.3 0 0 1 1.06-3.8A7.31 7.31 0 0 0 2.25 9a6.75 6.75 0 0 0 13.5 0 7.3 7.3 0 0 1-.45 2.25Z"
@@ -238,8 +226,6 @@ function App() {
               messages={state.messages}
               isLoading={state.isLoading}
               bottomRef={bottomRef}
-              showSourcesToggle={isMobile}
-              onToggleSources={() => setAdvancedOpen((v) => !v)}
               onRetry={handleRetry}
             />
           </Box>
@@ -275,49 +261,26 @@ function App() {
                   </Button>
                 ))}
               </Stack>
-              <Group align="center" gap="md" px="xs">
-                <Tooltip label={advancedOpen ? 'Hide sources' : 'Show sources'}>
-                  <ActionIcon
-                    size="xl"
-                    radius="xl"
-                    variant={advancedOpen ? 'filled' : 'subtle'}
-                    onClick={() => setAdvancedOpen((v) => !v)}
-                    aria-label="Toggle sources"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M3 4.5H7.5M11.5 4.5H15M3 9H6M10 9H15M3 13.5H7.5M11.5 13.5H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <circle cx="9.5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="8" cy="9" r="2" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="9.5" cy="13.5" r="2" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                  </ActionIcon>
-                </Tooltip>
-                <Box style={{ flex: 1 }}>
-                  <Group justify="space-between" mb={4}>
-                    <Text size="xs" c="dimmed">More results</Text>
-                    <Text size="xs" c="dimmed">Higher relevance</Text>
-                  </Group>
-                  <Slider
-                    min={MIN_SIMILARITY_MIN}
-                    max={MIN_SIMILARITY_MAX}
-                    step={MIN_SIMILARITY_STEP}
-                    value={state.minSimilarity}
-                    onChange={handleMinSimilarityChange}
-                    onChangeEnd={handleMinSimilarityCommit}
-                    label={(v) => v.toFixed(2)}
-                  />
-                </Box>
-              </Group>
+              <Box px="xs">
+                <Group justify="space-between" mb={4}>
+                  <Text size="xs" c="dimmed">More results</Text>
+                  <Text size="xs" c="dimmed" fw={500}>Similarity: {state.minSimilarity.toFixed(2)}</Text>
+                  <Text size="xs" c="dimmed">Higher relevance</Text>
+                </Group>
+                <Slider
+                  min={MIN_SIMILARITY_MIN}
+                  max={MIN_SIMILARITY_MAX}
+                  step={MIN_SIMILARITY_STEP}
+                  value={state.minSimilarity}
+                  onChange={handleMinSimilarityChange}
+                  label={(v) => v.toFixed(2)}
+                />
+              </Box>
             </Stack>
           </Box>
         </Stack>
       </AppShell.Main>
 
-      <SourcesPanel
-        messages={state.messages}
-        opened={advancedOpen}
-        onClose={() => setAdvancedOpen(false)}
-      />
     </AppShell>
   )
 }
