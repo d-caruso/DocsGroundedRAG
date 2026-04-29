@@ -1,7 +1,8 @@
 import json
 import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
 
@@ -11,14 +12,13 @@ GENERATION_MODEL_NAME = "gemini-2.5-flash-lite"
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 _embedding_model: SentenceTransformer | None = None
-_generation_model: genai.GenerativeModel | None = None
+_genai_client: genai.Client | None = None
 
 
 def init() -> None:
-    global _embedding_model, _generation_model
+    global _embedding_model, _genai_client
     _embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    _generation_model = genai.GenerativeModel(GENERATION_MODEL_NAME)
+    _genai_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
 def _retrieve(
@@ -129,10 +129,11 @@ def answer_query(
         }
 
     prompt = _build_prompt(query, retrieved)
-    response = _generation_model.generate_content(
-        prompt,
-        generation_config=genai.types.GenerationConfig(
-            thinking_config={"thinking_budget": 0}
+    response = _genai_client.models.generate_content(
+        model=GENERATION_MODEL_NAME,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_budget=0)
         ),
     )
     raw = _strip_json_fences(response.text)
