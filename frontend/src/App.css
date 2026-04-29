@@ -5,12 +5,6 @@
     linear-gradient(180deg, #f5f7fa 0%, #eef2f7 100%);
 }
 
-.shell-aside {
-  border-color: rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(16px);
-}
-
 .shell-main {
   display: block;
 }
@@ -92,7 +86,6 @@
     linear-gradient(180deg, #09111f 0%, #111827 100%);
 }
 
-[data-mantine-color-scheme='dark'] .shell-aside,
 [data-mantine-color-scheme='dark'] .surface-block {
   border-color: rgba(148, 163, 184, 0.12);
   background: rgba(15, 23, 42, 0.76);
