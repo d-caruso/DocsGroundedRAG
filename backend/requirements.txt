@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 sentence-transformers
-google-generativeai
+google-generativeai>=0.8.0
 psycopg[binary]
 psycopg_pool
 pgvector
