@@ -26,7 +26,7 @@ export function MessageList({
   const latestAssistantSourcesCount = latestAssistantMessage?.chunks.length ?? 0
 
   return (
-    <ScrollArea h="100%" offsetScrollbars>
+    <ScrollArea style={{ flex: 1 }} offsetScrollbars>
       <Stack gap="md" p="md" role="log" aria-live="polite" aria-relevant="additions text">
         {messages.map((message) => (
           <ChatMessage
