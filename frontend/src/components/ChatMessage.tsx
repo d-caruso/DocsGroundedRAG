@@ -41,14 +41,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
   if (message.status === 'error') {
     return (
       <Box style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Alert
-          radius="lg"
-          variant="light"
-          color="red"
-          p="sm"
-          maw={720}
-          w="100%"
-        >
+        <Alert radius="lg" variant="light" color="red" p="sm" maw={720}>
           <Group justify="space-between" gap="sm" wrap="nowrap">
             <Box style={{ flex: 1 }}>
               <Text size="sm" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>

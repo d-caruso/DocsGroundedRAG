@@ -1,11 +1,11 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { ActionIcon, Alert, AppShell, Badge, Box, Button, Center, Group, Loader, Stack, Text, Title, Tooltip, useMantineColorScheme } from '@mantine/core'
+import { ActionIcon, Alert, AppShell, Badge, Box, Button, Center, Group, Loader, Slider, Stack, Text, Title, Tooltip, useMantineColorScheme } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { checkHealth, postQuery } from './api/query'
 import { ChatInput } from './components/ChatInput'
 import { MessageList } from './components/MessageList'
 import { SourcesPanel } from './components/SourcesPanel'
-import { MIN_SIMILARITY_DEFAULT } from './types'
+import { MIN_SIMILARITY_DEFAULT, MIN_SIMILARITY_MIN, MIN_SIMILARITY_MAX, MIN_SIMILARITY_STEP } from './types'
 import type { ChatState, Message, SourceChunk } from './types'
 import './App.css'
 
@@ -172,7 +172,7 @@ function App() {
       className="app-shell"
     >
       <AppShell.Main className="shell-main">
-        <Stack gap="lg" maw={860} w="100%">
+        <Stack gap="lg" maw={860} mx="auto">
           {state.backendError ? (
             <Alert color="red" variant="light" radius="lg" title="Backend unreachable">
               <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
@@ -276,14 +276,14 @@ function App() {
                   </Button>
                 ))}
               </Stack>
-              <Group justify="center">
-                <Tooltip label={advancedOpen ? 'Hide sources & settings' : 'Show sources & settings'}>
+              <Group align="center" gap="md" px="xs">
+                <Tooltip label={advancedOpen ? 'Hide sources' : 'Show sources'}>
                   <ActionIcon
-                    size="lg"
+                    size="xl"
                     radius="xl"
                     variant={advancedOpen ? 'filled' : 'subtle'}
                     onClick={() => setAdvancedOpen((v) => !v)}
-                    aria-label="Toggle sources and settings"
+                    aria-label="Toggle sources"
                   >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                       <path d="M3 4.5H7.5M11.5 4.5H15M3 9H6M10 9H15M3 13.5H7.5M11.5 13.5H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -293,6 +293,20 @@ function App() {
                     </svg>
                   </ActionIcon>
                 </Tooltip>
+                <Box style={{ flex: 1 }}>
+                  <Text size="xs" c="dimmed" mb={6}>
+                    Min. similarity: {state.minSimilarity.toFixed(2)}
+                  </Text>
+                  <Slider
+                    min={MIN_SIMILARITY_MIN}
+                    max={MIN_SIMILARITY_MAX}
+                    step={MIN_SIMILARITY_STEP}
+                    value={state.minSimilarity}
+                    onChange={handleMinSimilarityChange}
+                    onChangeEnd={handleMinSimilarityCommit}
+                    label={(v) => v.toFixed(2)}
+                  />
+                </Box>
               </Group>
             </Stack>
           </Box>
@@ -303,9 +317,6 @@ function App() {
         messages={state.messages}
         opened={advancedOpen}
         onClose={() => setAdvancedOpen(false)}
-        minSimilarity={state.minSimilarity}
-        onMinSimilarityChange={handleMinSimilarityChange}
-        onMinSimilarityCommit={handleMinSimilarityCommit}
       />
     </AppShell>
   )
