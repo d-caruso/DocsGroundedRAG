@@ -202,14 +202,14 @@ const colorSchemeIcon = colorScheme === 'dark' ? (
                 <ActionIcon
                   size="lg"
                   radius="xl"
-                  variant="light"
+                  variant={colorScheme === 'dark' ? 'filled' : 'light'}
                   onClick={openHelp}
                   aria-label="Help"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M6.5 6C6.5 5.17157 7.17157 4.5 8 4.5C8.82843 4.5 9.5 5.17157 9.5 6C9.5 6.82843 8.82843 7.5 8 7.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <circle cx="8" cy="11" r="0.75" fill="currentColor" />
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="9" cy="9" r="7.25" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M7.25 7C7.25 6.03 8.03 5.25 9 5.25C9.97 5.25 10.75 6.03 10.75 7C10.75 7.97 9.97 8.75 9 8.75V10.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="9" cy="12.5" r="0.875" fill="currentColor" />
                   </svg>
                 </ActionIcon>
               </Group>
