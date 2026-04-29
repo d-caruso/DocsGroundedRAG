@@ -167,7 +167,6 @@ function App() {
 
   return (
     <AppShell
-      aside={{ width: 320, breakpoint: 'md' }}
       padding="lg"
       className="app-shell"
     >
@@ -294,9 +293,10 @@ function App() {
                   </ActionIcon>
                 </Tooltip>
                 <Box style={{ flex: 1 }}>
-                  <Text size="xs" c="dimmed" mb={6}>
-                    Min. similarity: {state.minSimilarity.toFixed(2)}
-                  </Text>
+                  <Group justify="space-between" mb={4}>
+                    <Text size="xs" c="dimmed">More results</Text>
+                    <Text size="xs" c="dimmed">Higher relevance</Text>
+                  </Group>
                   <Slider
                     min={MIN_SIMILARITY_MIN}
                     max={MIN_SIMILARITY_MAX}

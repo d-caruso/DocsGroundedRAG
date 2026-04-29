@@ -1,5 +1,4 @@
-import { AppShell, Drawer, ScrollArea, Stack, Text } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { Drawer, ScrollArea, Stack, Text } from '@mantine/core'
 import type { Message, SourceChunk } from '../../types'
 import { SourceCard } from './SourceCard'
 
@@ -18,7 +17,6 @@ function getLatestAssistantChunks(messages: Message[]): SourceChunk[] {
 }
 
 export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
-  const isMobile = useMediaQuery('(max-width: 768px)')
   const chunks = getLatestAssistantChunks(messages)
 
   const emptyState = (
@@ -33,23 +31,11 @@ export function SourcesPanel({ messages, opened, onClose }: SourcesPanelProps) {
     </Stack>
   )
 
-  if (isMobile) {
-    return (
-      <Drawer opened={opened} onClose={onClose} position="right" size="md" title="Sources">
-        <ScrollArea.Autosize mah="70vh" offsetScrollbars>
-          {content}
-        </ScrollArea.Autosize>
-      </Drawer>
-    )
-  }
-
-  if (!opened) return null
-
   return (
-    <AppShell.Aside p="md">
-      <ScrollArea h="100%" offsetScrollbars>
+    <Drawer opened={opened} onClose={onClose} position="right" size="md" title="Sources">
+      <ScrollArea.Autosize mah="85vh" offsetScrollbars>
         {content}
-      </ScrollArea>
-    </AppShell.Aside>
+      </ScrollArea.Autosize>
+    </Drawer>
   )
 }
