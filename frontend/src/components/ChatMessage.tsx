@@ -79,6 +79,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
         bg={isUser ? 'blue.6' : 'blue.0'}
         c={isUser ? 'white' : 'var(--mantine-color-text)'}
         shadow={isUser ? 'sm' : undefined}
+        className={isAssistant ? 'answer-chip' : undefined}
       >
         {isAssistant ? (
           <Box style={{ position: 'relative' }}>
