@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import hashlib
 from pathlib import Path
 import re
 import json
@@ -16,6 +17,11 @@ from rejection_log import (
 
 DOCS_PATH = Path("data/docs")
 OUTPUT_PATH = Path("data/chunks/chunks.json")
+
+def chunk_id(source_file: str, content: str) -> str:
+    digest = hashlib.sha1(content.encode("utf-8")).hexdigest()[:8]
+    return f"{Path(source_file).stem}_{digest}"
+
 
 def split_by_headings(text):
     sections = re.split(r"\n(?=# )|\n(?=## )", text)
@@ -36,10 +42,8 @@ def merge_small_chunks(chunks, min_words=140):
         else:
             merged.append(chunk)
 
-    # reassign ids after merge
-    for i, chunk in enumerate(merged):
-        source_stem = Path(chunk["metadata"]["source_file"]).stem
-        chunk["id"] = f"{source_stem}_{i}"
+    for chunk in merged:
+        chunk["id"] = chunk_id(chunk["metadata"]["source_file"], chunk["content"])
 
     return merged
 
@@ -222,7 +226,7 @@ def process_file(file_path, run_id: str):
                 continue
 
             results.append({
-                "id": "",
+                "id": chunk_id(file_path.name, sub_chunk),
                 "content": sub_chunk,
                 "metadata": {
                     "source_file": file_path.name,
