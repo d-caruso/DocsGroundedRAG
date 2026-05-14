@@ -419,7 +419,7 @@ Attach heading-path metadata to each chunk and switch to content-hash chunk IDs 
 
 ---
 
-#### Task 3.1 — Heading-path tracking ❌
+#### Task 3.1 — Heading-path tracking ✅
 
 Branch: `task/ingestion-pipeline-Task3.1-heading-path`
 Created from: `feature/ingestion-pipeline-Phase3-metadata`
