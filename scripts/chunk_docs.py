@@ -6,6 +6,7 @@ import json
 
 from clean_text import clean_text, information_density, noise_ratio, remove_tables
 from rejection_log import (
+    REJECTED_PATH,
     record_rejection,
     REASON_CODE_HEAVY,
     REASON_DUPLICATE,
@@ -17,7 +18,7 @@ from rejection_log import (
 )
 
 DOCS_PATH = Path("data/docs")
-OUTPUT_PATH = Path("data/chunks/chunks.json")
+CHUNKS_PATH = Path("data/chunks/chunks.json")
 
 def chunk_id(source_file: str, content: str) -> str:
     digest = hashlib.sha1(content.encode("utf-8")).hexdigest()[:8]
@@ -238,6 +239,23 @@ def process_file(file_path, run_id: str):
     results = merge_small_chunks(results)
     return results
 
+def prune_artifacts(batch_sources: set[str]) -> None:
+    for path in (CHUNKS_PATH, REJECTED_PATH):
+        if not path.exists():
+            continue
+        if path.suffix == ".json":
+            rows = json.loads(path.read_text(encoding="utf-8"))
+            kept = [r for r in rows if r["metadata"]["source_file"] not in batch_sources]
+            path.write_text(json.dumps(kept, indent=2), encoding="utf-8")
+        else:  # .jsonl
+            kept_lines = [
+                line
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if json.loads(line)["source_file"] not in batch_sources
+            ]
+            path.write_text("\n".join(kept_lines) + ("\n" if kept_lines else ""), encoding="utf-8")
+
+
 def deduplicate(chunks: list[dict], run_id: str) -> list[dict]:
     seen: dict[str, str] = {}
     survivors: list[dict] = []
@@ -261,6 +279,7 @@ def deduplicate(chunks: list[dict], run_id: str) -> list[dict]:
 
 def main():
     run_id = datetime.now(timezone.utc).isoformat()
+    prune_artifacts({p.name for p in DOCS_PATH.rglob("*.md")})
     all_chunks = []
 
     for file_path in DOCS_PATH.rglob("*.md"):
@@ -268,9 +287,9 @@ def main():
 
     all_chunks = deduplicate(all_chunks, run_id)
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CHUNKS_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+    with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
         json.dump(all_chunks, f, indent=2)
 
     print(f"Created {len(all_chunks)} chunks")
