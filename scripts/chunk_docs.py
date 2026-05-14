@@ -8,6 +8,7 @@ from clean_text import clean_text, information_density, noise_ratio, remove_tabl
 from rejection_log import (
     record_rejection,
     REASON_CODE_HEAVY,
+    REASON_DUPLICATE,
     REASON_HIGH_NOISE_RATIO,
     REASON_LOW_DENSITY,
     REASON_OVERSIZED,
@@ -237,12 +238,35 @@ def process_file(file_path, run_id: str):
     results = merge_small_chunks(results)
     return results
 
+def deduplicate(chunks: list[dict], run_id: str) -> list[dict]:
+    seen: dict[str, str] = {}
+    survivors: list[dict] = []
+    for c in chunks:
+        h = hashlib.sha1(c["content"].encode("utf-8")).hexdigest()
+        if h in seen:
+            record_rejection(
+                chunk_id=c["id"],
+                source_file=c["metadata"]["source_file"],
+                run_id=run_id,
+                stage="deduplication",
+                reason=REASON_DUPLICATE,
+                text=c["content"],
+                metric=seen[h],
+            )
+            continue
+        seen[h] = c["id"]
+        survivors.append(c)
+    return survivors
+
+
 def main():
     run_id = datetime.now(timezone.utc).isoformat()
     all_chunks = []
 
     for file_path in DOCS_PATH.rglob("*.md"):
         all_chunks.extend(process_file(file_path, run_id))
+
+    all_chunks = deduplicate(all_chunks, run_id)
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
