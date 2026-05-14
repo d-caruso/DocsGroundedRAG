@@ -589,7 +589,7 @@ Verification: re-run with a subset of files temporarily moved out of `data/docs/
 
 ---
 
-#### Task 5.2 — Delete-by-source transaction in Supabase loader ❌
+#### Task 5.2 — Delete-by-source transaction in Supabase loader ✅
 
 Branch: `task/ingestion-pipeline-Task5.2-supabase-idempotency`
 Created from: `feature/ingestion-pipeline-Phase5-idempotent-ingestion`
