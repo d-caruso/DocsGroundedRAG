@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import json
 
 from clean_text import clean_text, remove_tables
+from rejection_log import record_rejection
 
 DOCS_PATH = Path("data/docs")
 OUTPUT_PATH = Path("data/chunks/chunks.json")
@@ -113,32 +115,29 @@ def is_code_heavy_chunk(text, min_code_blocks=3, max_non_code_words=220):
     return len(code_blocks) >= min_code_blocks and non_code_words <= max_non_code_words
 
 
-def should_skip_chunk(text):
-    skip_headings = [
-        "Supported currencies",
-        "Test the integration",
-        "Font compatibility",
-        "Pricing",
-        "Exchange rate",
-        "Refunds",
-        "See also",
-        "Create a multi-currency price",
-        "Create a Checkout Session",
-    ]
+SKIP_HEADINGS = [
+    "Supported currencies",
+    "Test the integration",
+    "Font compatibility",
+    "Pricing",
+    "Exchange rate",
+    "Refunds",
+    "See also",
+    "Create a multi-currency price",
+    "Create a Checkout Session",
+]
 
-    if starts_with_any_heading(text, skip_headings):
-        return True
 
+def chunk_rejection_reason(text: str) -> str | None:
+    if starts_with_any_heading(text, SKIP_HEADINGS):
+        return "skip_heading"
     if is_table_heavy_chunk(text):
-        return True
-
+        return "table_heavy"
     if is_code_heavy_chunk(text):
-        return True
-
+        return "code_heavy"
     if is_too_large(text):
-        return True
-
-    return False
+        return "oversized"
+    return None
 
 def is_too_large(text, max_words=500):
     return word_count(text) > max_words
@@ -147,7 +146,7 @@ def split_by_h2(text):
     parts = re.split(r"\n(?=## )", text)
     return [p.strip() for p in parts if p.strip()]
 
-def process_file(file_path):
+def process_file(file_path, run_id: str):
     content = file_path.read_text(encoding="utf-8")
     content = clean_text(content)
     content = remove_tables(content)
@@ -155,8 +154,17 @@ def process_file(file_path):
 
     results = []
 
-    for chunk in chunks:
-        if should_skip_chunk(chunk):
+    for i, chunk in enumerate(chunks):
+        reason = chunk_rejection_reason(chunk)
+        if reason is not None:
+            record_rejection(
+                chunk_id=f"{file_path.stem}_pre_{i}",
+                source_file=file_path.name,
+                run_id=run_id,
+                stage="structural_checks",
+                reason=reason,
+                text=chunk,
+            )
             continue
 
         split_chunks = split_large_chunk(chunk, max_words=500)
@@ -167,8 +175,17 @@ def process_file(file_path):
             else:
                 sub_chunks = [split_chunk]
 
-        for sub_chunk in sub_chunks:
-            if should_skip_chunk(sub_chunk):
+        for j, sub_chunk in enumerate(sub_chunks):
+            reason = chunk_rejection_reason(sub_chunk)
+            if reason is not None:
+                record_rejection(
+                    chunk_id=f"{file_path.stem}_sub_{i}_{j}",
+                    source_file=file_path.name,
+                    run_id=run_id,
+                    stage="structural_checks",
+                    reason=reason,
+                    text=sub_chunk,
+                )
                 continue
 
             results.append({
@@ -183,10 +200,11 @@ def process_file(file_path):
     return results
 
 def main():
+    run_id = datetime.now(timezone.utc).isoformat()
     all_chunks = []
 
     for file_path in DOCS_PATH.rglob("*.md"):
-        all_chunks.extend(process_file(file_path))
+        all_chunks.extend(process_file(file_path, run_id))
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
