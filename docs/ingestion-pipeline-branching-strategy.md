@@ -549,7 +549,7 @@ Make every stage re-runnable per `source_file`: delete-before-append in local ar
 
 ---
 
-#### Task 5.1 — Delete-by-source in local artifacts ❌
+#### Task 5.1 — Delete-by-source in local artifacts ✅
 
 Branch: `task/ingestion-pipeline-Task5.1-local-idempotency`
 Created from: `feature/ingestion-pipeline-Phase5-idempotent-ingestion`
