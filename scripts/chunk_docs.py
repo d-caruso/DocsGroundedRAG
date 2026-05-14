@@ -3,11 +3,12 @@ from pathlib import Path
 import re
 import json
 
-from clean_text import clean_text, noise_ratio, remove_tables
+from clean_text import clean_text, information_density, noise_ratio, remove_tables
 from rejection_log import (
     record_rejection,
     REASON_CODE_HEAVY,
     REASON_HIGH_NOISE_RATIO,
+    REASON_LOW_DENSITY,
     REASON_OVERSIZED,
     REASON_SKIP_HEADING,
     REASON_TABLE_HEAVY,
@@ -122,7 +123,8 @@ def is_code_heavy_chunk(text, min_code_blocks=3, max_non_code_words=220):
     return len(code_blocks) >= min_code_blocks and non_code_words <= max_non_code_words
 
 
-NOISE_RATIO_THRESHOLD = 0.178  # p99 from measure_noise_ratio.py
+NOISE_RATIO_THRESHOLD = 0.178   # p99 from measure_noise_ratio.py
+LOW_DENSITY_THRESHOLD = 0.564   # p1  from measure_density.py
 
 SKIP_HEADINGS = [
     "Supported currencies",
@@ -149,6 +151,9 @@ def chunk_rejection_reason(text: str) -> tuple[str, float | None] | None:
     ratio = noise_ratio(text)
     if ratio > NOISE_RATIO_THRESHOLD:
         return (REASON_HIGH_NOISE_RATIO, ratio)
+    density = information_density(text)
+    if density < LOW_DENSITY_THRESHOLD:
+        return (REASON_LOW_DENSITY, density)
     return None
 
 def is_too_large(text, max_words=500):
