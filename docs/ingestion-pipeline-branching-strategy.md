@@ -18,7 +18,7 @@ The work spans five sequential phases. Each depends on artifacts introduced by t
 |-------|-------|-------|--------|
 | 1 | Text Cleaning extraction | Lift cleaning out of the chunker; add artifact / whitespace / newline regex sub-steps | ✅ |
 | 2 | Structural checks + audit trail | `rejected.jsonl` writer; convert silent skips to audited rejections; add noise-ratio and low-density gates | ✅ |
-| 3 | Metadata enrichment | Heading-path tracking; content-hash chunk IDs | ❌ |
+| 3 | Metadata enrichment | Heading-path tracking; content-hash chunk IDs | ✅ |
 | 4 | Deduplication | Hash-based dedup stage before embedding | ❌ |
 | 5 | Idempotent re-ingestion | Delete-by-source in `chunks.json`, `rejected.jsonl`, and Supabase | ❌ |
 
@@ -403,7 +403,7 @@ Verification: `rejected.jsonl` contains rows with `reason="low_density"` and `me
 
 ---
 
-## Phase 3 — Metadata enrichment ❌
+## Phase 3 — Metadata enrichment ✅
 
 | | |
 |---|---|
