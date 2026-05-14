@@ -1,0 +1,13 @@
+name: keep-alive-hf
+
+on:
+  schedule:
+    - cron: "0 0 */2 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping HF Space
+        run: curl -sf https://d-caruso-dgrag-api.hf.space/health

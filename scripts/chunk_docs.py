@@ -1,36 +1,44 @@
+from datetime import datetime, timezone
+import hashlib
 from pathlib import Path
 import re
 import json
 
+from clean_text import clean_text, information_density, noise_ratio, remove_tables
+from rejection_log import (
+    REJECTED_PATH,
+    record_rejection,
+    REASON_CODE_HEAVY,
+    REASON_DUPLICATE,
+    REASON_HIGH_NOISE_RATIO,
+    REASON_LOW_DENSITY,
+    REASON_OVERSIZED,
+    REASON_SKIP_HEADING,
+    REASON_TABLE_HEAVY,
+)
+
 DOCS_PATH = Path("data/docs")
-OUTPUT_PATH = Path("data/chunks/chunks.json")
+CHUNKS_PATH = Path("data/chunks/chunks.json")
+
+def chunk_id(source_file: str, content: str) -> str:
+    digest = hashlib.sha1(content.encode("utf-8")).hexdigest()[:8]
+    return f"{Path(source_file).stem}_{digest}"
+
 
 def split_by_headings(text):
     sections = re.split(r"\n(?=# )|\n(?=## )", text)
     return [s.strip() for s in sections if s.strip()]
 
-def clean_text(text):
-    # remove LLM instructions blocks (basic)
-    text = re.sub(
-        r"Instructions for LLMs:.*?(?=\n# |\n## |\Z)",
-        "",
-        text,
-        flags=re.DOTALL
-    )
-    text = re.sub(r"!\[.*?\]\(.*?\)", "", text)
-    return text.strip()
-
-def remove_tables(text):
-    lines = text.splitlines()
-    cleaned = []
-    for line in lines:
-        if "|" in line:
-            continue
-        cleaned.append(line)
-    return "\n".join(cleaned)
-
 def word_count(text):
     return len(text.split())
+
+def _rebuild_heading_path(content: str, base_path: list[str]) -> list[str]:
+    path = base_path[:]
+    for match in re.finditer(r"^\s{0,3}(#{1,3})\s+(.+)$", content, flags=re.MULTILINE):
+        level = len(match.group(1))
+        path = path[: level - 1] + [match.group(2).strip()]
+    return path
+
 
 def merge_small_chunks(chunks, min_words=140):
     if not chunks:
@@ -44,10 +52,11 @@ def merge_small_chunks(chunks, min_words=140):
         else:
             merged.append(chunk)
 
-    # reassign ids after merge
-    for i, chunk in enumerate(merged):
-        source_stem = Path(chunk["metadata"]["source_file"]).stem
-        chunk["id"] = f"{source_stem}_{i}"
+    for chunk in merged:
+        chunk["id"] = chunk_id(chunk["metadata"]["source_file"], chunk["content"])
+        chunk["metadata"]["heading_path"] = _rebuild_heading_path(
+            chunk["content"], chunk["metadata"]["heading_path"]
+        )
 
     return merged
 
@@ -119,62 +128,88 @@ def starts_with_any_heading(text, headings):
     return any(heading.startswith(h.lower()) for h in headings)
 
 
-def code_block_count(text):
-    return len(re.findall(r"```", text)) // 2
+def code_block_count(text: str) -> int:
+    return len(re.findall(r"```.*?```", text, flags=re.DOTALL))
 
 
 def is_code_heavy_chunk(text, min_code_blocks=3, max_non_code_words=220):
-    code_blocks = re.findall(r"```.*?```", text, flags=re.DOTALL)
     non_code_text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
-    non_code_words = word_count(non_code_text)
-
-    return len(code_blocks) >= min_code_blocks and non_code_words <= max_non_code_words
+    return code_block_count(text) >= min_code_blocks and word_count(non_code_text) <= max_non_code_words
 
 
-def should_skip_chunk(text):
-    skip_headings = [
-        "Supported currencies",
-        "Test the integration",
-        "Font compatibility",
-        "Pricing",
-        "Exchange rate",
-        "Refunds",
-        "See also",
-        "Create a multi-currency price",
-        "Create a Checkout Session",
-    ]
+NOISE_RATIO_THRESHOLD = 0.178   # p99 from measure_noise_ratio.py
+LOW_DENSITY_THRESHOLD = 0.564   # p1  from measure_density.py
 
-    if starts_with_any_heading(text, skip_headings):
-        return True
+SKIP_HEADINGS = [
+    "Supported currencies",
+    "Test the integration",
+    "Font compatibility",
+    "Pricing",
+    "Exchange rate",
+    "Refunds",
+    "See also",
+    "Create a multi-currency price",
+    "Create a Checkout Session",
+]
 
+
+def chunk_rejection_reason(text: str) -> tuple[str, float | None] | None:
+    if starts_with_any_heading(text, SKIP_HEADINGS):
+        return (REASON_SKIP_HEADING, None)
     if is_table_heavy_chunk(text):
-        return True
-
+        return (REASON_TABLE_HEAVY, None)
     if is_code_heavy_chunk(text):
-        return True
-
+        return (REASON_CODE_HEAVY, None)
     if is_too_large(text):
-        return True
-
-    return False
+        return (REASON_OVERSIZED, None)
+    ratio = noise_ratio(text)
+    if ratio > NOISE_RATIO_THRESHOLD:
+        return (REASON_HIGH_NOISE_RATIO, ratio)
+    density = information_density(text)
+    if density < LOW_DENSITY_THRESHOLD:
+        return (REASON_LOW_DENSITY, density)
+    return None
 
 def is_too_large(text, max_words=500):
     return word_count(text) > max_words
+
+def extract_heading_path(chunk_text: str, parent_path: list[str]) -> list[str]:
+    match = re.match(r"^\s{0,3}(#{1,3})\s+(.+)$", chunk_text, flags=re.MULTILINE)
+    if not match:
+        return parent_path
+    level = len(match.group(1))
+    title = match.group(2).strip()
+    return parent_path[: level - 1] + [title]
+
 
 def split_by_h2(text):
     parts = re.split(r"\n(?=## )", text)
     return [p.strip() for p in parts if p.strip()]
 
-def process_file(file_path):
+def process_file(file_path, run_id: str):
     content = file_path.read_text(encoding="utf-8")
     content = clean_text(content)
     content = remove_tables(content)
     chunks = split_by_headings(content)
 
     results = []
+    heading_path: list[str] = []
 
-    for chunk in chunks:
-        if should_skip_chunk(chunk):
+    for i, chunk in enumerate(chunks):
+        heading_path = extract_heading_path(chunk, heading_path)
+
+        result = chunk_rejection_reason(chunk)
+        if result is not None:
+            reason, metric = result
+            record_rejection(
+                chunk_id=f"{file_path.stem}_pre_{i}",
+                source_file=file_path.name,
+                run_id=run_id,
+                stage="structural_checks",
+                reason=reason,
+                text=chunk,
+                metric=metric,
+            )
             continue
 
         split_chunks = split_large_chunk(chunk, max_words=500)
@@ -185,30 +220,84 @@ def process_file(file_path):
             else:
                 sub_chunks = [split_chunk]
 
-        for sub_chunk in sub_chunks:
-            if should_skip_chunk(sub_chunk):
-                continue
+            for j, sub_chunk in enumerate(sub_chunks):
+                result = chunk_rejection_reason(sub_chunk)
+                if result is not None:
+                    reason, metric = result
+                    record_rejection(
+                        chunk_id=f"{file_path.stem}_sub_{i}_{j}",
+                        source_file=file_path.name,
+                        run_id=run_id,
+                        stage="structural_checks",
+                        reason=reason,
+                        text=sub_chunk,
+                        metric=metric,
+                    )
+                    continue
 
-            results.append({
-                "id": "",
-                "content": sub_chunk,
-                "metadata": {
-                    "source_file": file_path.name,
-                    "category": str(file_path.parent.relative_to(DOCS_PATH))
-                }
-            })
+                results.append({
+                    "id": chunk_id(file_path.name, sub_chunk),
+                    "content": sub_chunk,
+                    "metadata": {
+                        "source_file": file_path.name,
+                        "category": str(file_path.parent.relative_to(DOCS_PATH)),
+                        "heading_path": extract_heading_path(sub_chunk, heading_path),
+                    }
+                })
     results = merge_small_chunks(results)
     return results
 
+def prune_artifacts(batch_sources: set[str]) -> None:
+    for path in (CHUNKS_PATH, REJECTED_PATH):
+        if not path.exists():
+            continue
+        if path.suffix == ".json":
+            rows = json.loads(path.read_text(encoding="utf-8"))
+            kept = [r for r in rows if r["metadata"]["source_file"] not in batch_sources]
+            path.write_text(json.dumps(kept, indent=2), encoding="utf-8")
+        else:  # .jsonl
+            kept_lines = [
+                line
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if json.loads(line)["source_file"] not in batch_sources
+            ]
+            path.write_text("\n".join(kept_lines) + ("\n" if kept_lines else ""), encoding="utf-8")
+
+
+def deduplicate(chunks: list[dict], run_id: str) -> list[dict]:
+    seen: dict[str, str] = {}
+    survivors: list[dict] = []
+    for c in chunks:
+        h = hashlib.sha1(c["content"].encode("utf-8")).hexdigest()
+        if h in seen:
+            record_rejection(
+                chunk_id=c["id"],
+                source_file=c["metadata"]["source_file"],
+                run_id=run_id,
+                stage="deduplication",
+                reason=REASON_DUPLICATE,
+                text=c["content"],
+                metric=seen[h],
+            )
+            continue
+        seen[h] = c["id"]
+        survivors.append(c)
+    return survivors
+
+
 def main():
+    run_id = datetime.now(timezone.utc).isoformat()
+    prune_artifacts({p.name for p in DOCS_PATH.rglob("*.md")})
     all_chunks = []
 
     for file_path in DOCS_PATH.rglob("*.md"):
-        all_chunks.extend(process_file(file_path))
+        all_chunks.extend(process_file(file_path, run_id))
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    all_chunks = deduplicate(all_chunks, run_id)
 
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+    CHUNKS_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(CHUNKS_PATH, "w", encoding="utf-8") as f:
         json.dump(all_chunks, f, indent=2)
 
     print(f"Created {len(all_chunks)} chunks")
