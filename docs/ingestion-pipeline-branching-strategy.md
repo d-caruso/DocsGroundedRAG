@@ -20,7 +20,7 @@ The work spans five sequential phases. Each depends on artifacts introduced by t
 | 2 | Structural checks + audit trail | `rejected.jsonl` writer; convert silent skips to audited rejections; add noise-ratio and low-density gates | ✅ |
 | 3 | Metadata enrichment | Heading-path tracking; content-hash chunk IDs | ✅ |
 | 4 | Deduplication | Hash-based dedup stage before embedding | ✅ |
-| 5 | Idempotent re-ingestion | Delete-by-source in `chunks.json`, `rejected.jsonl`, and Supabase | ❌ |
+| 5 | Idempotent re-ingestion | Delete-by-source in `chunks.json`, `rejected.jsonl`, and Supabase | ✅ |
 
 ---
 
@@ -533,7 +533,7 @@ Verification: temporarily duplicate a section in one file under `data/docs/`, re
 
 ---
 
-## Phase 5 — Idempotent re-ingestion ❌
+## Phase 5 — Idempotent re-ingestion ✅
 
 | | |
 |---|---|
