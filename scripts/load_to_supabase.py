@@ -20,21 +20,26 @@ def main():
 
     print(f"Loaded {len(chunks)} chunks from {INPUT_PATH.name}")
 
+    batch_sources = sorted({chunk["metadata"]["source_file"] for chunk in chunks})
+
+    rows = [
+        (
+            chunk["content"],
+            json.dumps(chunk["metadata"]),
+            chunk["embedding"],
+        )
+        for chunk in chunks
+    ]
+
     with psycopg.connect(DB_URL) as conn:
         register_vector(conn)
 
         with conn.cursor() as cur:
-            cur.execute("truncate table chunks")
-            print("Truncated chunks table")
-
-            rows = [
-                (
-                    chunk["content"],
-                    json.dumps(chunk["metadata"]),
-                    chunk["embedding"],
-                )
-                for chunk in chunks
-            ]
+            cur.execute(
+                "delete from chunks where metadata->>'source_file' = any(%s)",
+                (batch_sources,),
+            )
+            print(f"Deleted existing rows for {len(batch_sources)} source file(s)")
 
             cur.executemany(
                 "insert into chunks (content, metadata, embedding) values (%s, %s::jsonb, %s)",
