@@ -71,7 +71,7 @@ Move text cleaning out of `scripts/chunk_docs.py` into a standalone module that 
 
 ---
 
-#### Task 1.1 — Create `scripts/clean_text.py` ❌
+#### Task 1.1 — Create `scripts/clean_text.py` ✅
 
 Branch: `task/ingestion-pipeline-Task1.1-extract-cleaning`
 Created from: `feature/ingestion-pipeline-Phase1-text-cleaning`
