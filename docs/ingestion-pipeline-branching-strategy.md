@@ -284,7 +284,7 @@ Verification: re-run `scripts/chunk_docs.py`. `data/chunks/rejected.jsonl` is no
 
 ---
 
-#### Task 2.3 — Noise-ratio gate + threshold measurement ❌
+#### Task 2.3 — Noise-ratio gate + threshold measurement ✅
 
 Branch: `task/ingestion-pipeline-Task2.3-noise-ratio`
 Created from: `feature/ingestion-pipeline-Phase2-structural-checks`
