@@ -129,7 +129,7 @@ Verification: `python3 scripts/chunk_docs.py` runs; `git diff data/chunks/chunks
 
 ---
 
-#### Task 1.3 — Add artifact / whitespace / newline regex sub-steps ❌
+#### Task 1.3 — Add artifact / whitespace / newline regex sub-steps ✅
 
 Branch: `task/ingestion-pipeline-Task1.3-artifact-regex`
 Created from: `feature/ingestion-pipeline-Phase1-text-cleaning`
