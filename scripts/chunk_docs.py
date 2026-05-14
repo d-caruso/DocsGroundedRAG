@@ -32,6 +32,14 @@ def split_by_headings(text):
 def word_count(text):
     return len(text.split())
 
+def _rebuild_heading_path(content: str, base_path: list[str]) -> list[str]:
+    path = base_path[:]
+    for match in re.finditer(r"^\s{0,3}(#{1,3})\s+(.+)$", content, flags=re.MULTILINE):
+        level = len(match.group(1))
+        path = path[: level - 1] + [match.group(2).strip()]
+    return path
+
+
 def merge_small_chunks(chunks, min_words=140):
     if not chunks:
         return []
@@ -46,6 +54,9 @@ def merge_small_chunks(chunks, min_words=140):
 
     for chunk in merged:
         chunk["id"] = chunk_id(chunk["metadata"]["source_file"], chunk["content"])
+        chunk["metadata"]["heading_path"] = _rebuild_heading_path(
+            chunk["content"], chunk["metadata"]["heading_path"]
+        )
 
     return merged
 
@@ -117,16 +128,13 @@ def starts_with_any_heading(text, headings):
     return any(heading.startswith(h.lower()) for h in headings)
 
 
-def code_block_count(text):
-    return len(re.findall(r"```", text)) // 2
+def code_block_count(text: str) -> int:
+    return len(re.findall(r"```.*?```", text, flags=re.DOTALL))
 
 
 def is_code_heavy_chunk(text, min_code_blocks=3, max_non_code_words=220):
-    code_blocks = re.findall(r"```.*?```", text, flags=re.DOTALL)
     non_code_text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
-    non_code_words = word_count(non_code_text)
-
-    return len(code_blocks) >= min_code_blocks and non_code_words <= max_non_code_words
+    return code_block_count(text) >= min_code_blocks and word_count(non_code_text) <= max_non_code_words
 
 
 NOISE_RATIO_THRESHOLD = 0.178   # p99 from measure_noise_ratio.py
