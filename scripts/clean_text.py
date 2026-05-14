@@ -22,6 +22,13 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
+def noise_ratio(text: str) -> float:
+    if not text:
+        return 1.0
+    non_alpha = sum(1 for c in text if not c.isalnum() and not c.isspace())
+    return non_alpha / len(text)
+
+
 def remove_tables(text: str) -> str:
     lines = text.splitlines()
     return "\n".join(line for line in lines if "|" not in line)

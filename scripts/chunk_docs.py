@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 import json
 
-from clean_text import clean_text, remove_tables
+from clean_text import clean_text, noise_ratio, remove_tables
 from rejection_log import record_rejection
 
 DOCS_PATH = Path("data/docs")
@@ -115,6 +115,8 @@ def is_code_heavy_chunk(text, min_code_blocks=3, max_non_code_words=220):
     return len(code_blocks) >= min_code_blocks and non_code_words <= max_non_code_words
 
 
+NOISE_RATIO_THRESHOLD = 0.178  # p99 from measure_noise_ratio.py
+
 SKIP_HEADINGS = [
     "Supported currencies",
     "Test the integration",
@@ -128,15 +130,18 @@ SKIP_HEADINGS = [
 ]
 
 
-def chunk_rejection_reason(text: str) -> str | None:
+def chunk_rejection_reason(text: str) -> tuple[str, float | None] | None:
     if starts_with_any_heading(text, SKIP_HEADINGS):
-        return "skip_heading"
+        return ("skip_heading", None)
     if is_table_heavy_chunk(text):
-        return "table_heavy"
+        return ("table_heavy", None)
     if is_code_heavy_chunk(text):
-        return "code_heavy"
+        return ("code_heavy", None)
     if is_too_large(text):
-        return "oversized"
+        return ("oversized", None)
+    ratio = noise_ratio(text)
+    if ratio > NOISE_RATIO_THRESHOLD:
+        return ("high_noise_ratio", ratio)
     return None
 
 def is_too_large(text, max_words=500):
@@ -155,8 +160,9 @@ def process_file(file_path, run_id: str):
     results = []
 
     for i, chunk in enumerate(chunks):
-        reason = chunk_rejection_reason(chunk)
-        if reason is not None:
+        result = chunk_rejection_reason(chunk)
+        if result is not None:
+            reason, metric = result
             record_rejection(
                 chunk_id=f"{file_path.stem}_pre_{i}",
                 source_file=file_path.name,
@@ -164,6 +170,7 @@ def process_file(file_path, run_id: str):
                 stage="structural_checks",
                 reason=reason,
                 text=chunk,
+                metric=metric,
             )
             continue
 
@@ -176,8 +183,9 @@ def process_file(file_path, run_id: str):
                 sub_chunks = [split_chunk]
 
         for j, sub_chunk in enumerate(sub_chunks):
-            reason = chunk_rejection_reason(sub_chunk)
-            if reason is not None:
+            result = chunk_rejection_reason(sub_chunk)
+            if result is not None:
+                reason, metric = result
                 record_rejection(
                     chunk_id=f"{file_path.stem}_sub_{i}_{j}",
                     source_file=file_path.name,
@@ -185,6 +193,7 @@ def process_file(file_path, run_id: str):
                     stage="structural_checks",
                     reason=reason,
                     text=sub_chunk,
+                    metric=metric,
                 )
                 continue
 
