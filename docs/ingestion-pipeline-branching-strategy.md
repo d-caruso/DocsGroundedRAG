@@ -184,7 +184,7 @@ Replace the silent skips in `should_skip_chunk` (`scripts/chunk_docs.py:134-159`
 
 ---
 
-#### Task 2.1 — `rejected.jsonl` writer module ❌
+#### Task 2.1 — `rejected.jsonl` writer module ✅
 
 Branch: `task/ingestion-pipeline-Task2.1-rejection-log`
 Created from: `feature/ingestion-pipeline-Phase2-structural-checks`
