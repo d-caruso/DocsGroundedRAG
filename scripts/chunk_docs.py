@@ -212,30 +212,30 @@ def process_file(file_path, run_id: str):
             else:
                 sub_chunks = [split_chunk]
 
-        for j, sub_chunk in enumerate(sub_chunks):
-            result = chunk_rejection_reason(sub_chunk)
-            if result is not None:
-                reason, metric = result
-                record_rejection(
-                    chunk_id=f"{file_path.stem}_sub_{i}_{j}",
-                    source_file=file_path.name,
-                    run_id=run_id,
-                    stage="structural_checks",
-                    reason=reason,
-                    text=sub_chunk,
-                    metric=metric,
-                )
-                continue
+            for j, sub_chunk in enumerate(sub_chunks):
+                result = chunk_rejection_reason(sub_chunk)
+                if result is not None:
+                    reason, metric = result
+                    record_rejection(
+                        chunk_id=f"{file_path.stem}_sub_{i}_{j}",
+                        source_file=file_path.name,
+                        run_id=run_id,
+                        stage="structural_checks",
+                        reason=reason,
+                        text=sub_chunk,
+                        metric=metric,
+                    )
+                    continue
 
-            results.append({
-                "id": chunk_id(file_path.name, sub_chunk),
-                "content": sub_chunk,
-                "metadata": {
-                    "source_file": file_path.name,
-                    "category": str(file_path.parent.relative_to(DOCS_PATH)),
-                    "heading_path": extract_heading_path(sub_chunk, heading_path),
-                }
-            })
+                results.append({
+                    "id": chunk_id(file_path.name, sub_chunk),
+                    "content": sub_chunk,
+                    "metadata": {
+                        "source_file": file_path.name,
+                        "category": str(file_path.parent.relative_to(DOCS_PATH)),
+                        "heading_path": extract_heading_path(sub_chunk, heading_path),
+                    }
+                })
     results = merge_small_chunks(results)
     return results
 
