@@ -622,7 +622,7 @@ Verification: load a single-file subset; query Supabase and confirm only that fi
 
 ---
 
-#### Task 5.3 — Prune step for removed files ❌
+#### Task 5.3 — Prune step for removed files ✅
 
 Branch: `task/ingestion-pipeline-Task5.3-prune-removed`
 Created from: `feature/ingestion-pipeline-Phase5-idempotent-ingestion`
