@@ -448,7 +448,7 @@ Verification: every chunk in `chunks.json` has a non-empty `metadata.heading_pat
 
 ---
 
-#### Task 3.2 — Content-hash chunk IDs ❌
+#### Task 3.2 — Content-hash chunk IDs ✅
 
 Branch: `task/ingestion-pipeline-Task3.2-stable-ids`
 Created from: `feature/ingestion-pipeline-Phase3-metadata`
