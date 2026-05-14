@@ -16,7 +16,7 @@ The work spans five sequential phases. Each depends on artifacts introduced by t
 
 | Phase | Label | Scope | Status |
 |-------|-------|-------|--------|
-| 1 | Text Cleaning extraction | Lift cleaning out of the chunker; add artifact / whitespace / newline regex sub-steps | ❌ |
+| 1 | Text Cleaning extraction | Lift cleaning out of the chunker; add artifact / whitespace / newline regex sub-steps | ✅ |
 | 2 | Structural checks + audit trail | `rejected.jsonl` writer; convert silent skips to audited rejections; add noise-ratio and low-density gates | ❌ |
 | 3 | Metadata enrichment | Heading-path tracking; content-hash chunk IDs | ❌ |
 | 4 | Deduplication | Hash-based dedup stage before embedding | ❌ |
@@ -55,7 +55,7 @@ git checkout -b feature/ingestion-pipeline
 
 ---
 
-## Phase 1 — Text Cleaning extraction ❌
+## Phase 1 — Text Cleaning extraction ✅
 
 | | |
 |---|---|
