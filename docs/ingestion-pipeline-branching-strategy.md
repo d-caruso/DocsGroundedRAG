@@ -108,7 +108,7 @@ Verification: module imports without error; nothing else changes yet.
 
 ---
 
-#### Task 1.2 — Switch `chunk_docs.py` to use the new module ❌
+#### Task 1.2 — Switch `chunk_docs.py` to use the new module ✅
 
 Branch: `task/ingestion-pipeline-Task1.2-chunker-uses-clean-module`
 Created from: `feature/ingestion-pipeline-Phase1-text-cleaning`
