@@ -159,6 +159,15 @@ def chunk_rejection_reason(text: str) -> tuple[str, float | None] | None:
 def is_too_large(text, max_words=500):
     return word_count(text) > max_words
 
+def extract_heading_path(chunk_text: str, parent_path: list[str]) -> list[str]:
+    match = re.match(r"^\s{0,3}(#{1,3})\s+(.+)$", chunk_text, flags=re.MULTILINE)
+    if not match:
+        return parent_path
+    level = len(match.group(1))
+    title = match.group(2).strip()
+    return parent_path[: level - 1] + [title]
+
+
 def split_by_h2(text):
     parts = re.split(r"\n(?=## )", text)
     return [p.strip() for p in parts if p.strip()]
@@ -170,8 +179,11 @@ def process_file(file_path, run_id: str):
     chunks = split_by_headings(content)
 
     results = []
+    heading_path: list[str] = []
 
     for i, chunk in enumerate(chunks):
+        heading_path = extract_heading_path(chunk, heading_path)
+
         result = chunk_rejection_reason(chunk)
         if result is not None:
             reason, metric = result
@@ -214,7 +226,8 @@ def process_file(file_path, run_id: str):
                 "content": sub_chunk,
                 "metadata": {
                     "source_file": file_path.name,
-                    "category": str(file_path.parent.relative_to(DOCS_PATH))
+                    "category": str(file_path.parent.relative_to(DOCS_PATH)),
+                    "heading_path": extract_heading_path(sub_chunk, heading_path),
                 }
             })
     results = merge_small_chunks(results)
