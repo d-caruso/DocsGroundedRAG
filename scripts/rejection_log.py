@@ -2,6 +2,14 @@ import json
 from pathlib import Path
 from typing import Any
 
+REASON_SKIP_HEADING = "skip_heading"
+REASON_TABLE_HEAVY = "table_heavy"
+REASON_CODE_HEAVY = "code_heavy"
+REASON_OVERSIZED = "oversized"
+REASON_HIGH_NOISE_RATIO = "high_noise_ratio"
+REASON_LOW_DENSITY = "low_density"
+REASON_DUPLICATE = "duplicate"
+
 REJECTED_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "chunks" / "rejected.jsonl"
 )

@@ -4,7 +4,14 @@ import re
 import json
 
 from clean_text import clean_text, noise_ratio, remove_tables
-from rejection_log import record_rejection
+from rejection_log import (
+    record_rejection,
+    REASON_CODE_HEAVY,
+    REASON_HIGH_NOISE_RATIO,
+    REASON_OVERSIZED,
+    REASON_SKIP_HEADING,
+    REASON_TABLE_HEAVY,
+)
 
 DOCS_PATH = Path("data/docs")
 OUTPUT_PATH = Path("data/chunks/chunks.json")
@@ -132,16 +139,16 @@ SKIP_HEADINGS = [
 
 def chunk_rejection_reason(text: str) -> tuple[str, float | None] | None:
     if starts_with_any_heading(text, SKIP_HEADINGS):
-        return ("skip_heading", None)
+        return (REASON_SKIP_HEADING, None)
     if is_table_heavy_chunk(text):
-        return ("table_heavy", None)
+        return (REASON_TABLE_HEAVY, None)
     if is_code_heavy_chunk(text):
-        return ("code_heavy", None)
+        return (REASON_CODE_HEAVY, None)
     if is_too_large(text):
-        return ("oversized", None)
+        return (REASON_OVERSIZED, None)
     ratio = noise_ratio(text)
     if ratio > NOISE_RATIO_THRESHOLD:
-        return ("high_noise_ratio", ratio)
+        return (REASON_HIGH_NOISE_RATIO, ratio)
     return None
 
 def is_too_large(text, max_words=500):
