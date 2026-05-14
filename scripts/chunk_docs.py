@@ -2,32 +2,14 @@ from pathlib import Path
 import re
 import json
 
+from clean_text import clean_text, remove_tables
+
 DOCS_PATH = Path("data/docs")
 OUTPUT_PATH = Path("data/chunks/chunks.json")
 
 def split_by_headings(text):
     sections = re.split(r"\n(?=# )|\n(?=## )", text)
     return [s.strip() for s in sections if s.strip()]
-
-def clean_text(text):
-    # remove LLM instructions blocks (basic)
-    text = re.sub(
-        r"Instructions for LLMs:.*?(?=\n# |\n## |\Z)",
-        "",
-        text,
-        flags=re.DOTALL
-    )
-    text = re.sub(r"!\[.*?\]\(.*?\)", "", text)
-    return text.strip()
-
-def remove_tables(text):
-    lines = text.splitlines()
-    cleaned = []
-    for line in lines:
-        if "|" in line:
-            continue
-        cleaned.append(line)
-    return "\n".join(cleaned)
 
 def word_count(text):
     return len(text.split())
