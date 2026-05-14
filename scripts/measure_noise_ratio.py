@@ -1,14 +1,9 @@
 import json
 from pathlib import Path
 
+from clean_text import noise_ratio
+
 CHUNKS = Path(__file__).resolve().parent.parent / "data" / "chunks" / "chunks.json"
-
-
-def noise_ratio(text: str) -> float:
-    if not text:
-        return 1.0
-    non_alpha = sum(1 for c in text if not c.isalnum() and not c.isspace())
-    return non_alpha / len(text)
 
 
 def main() -> None:
