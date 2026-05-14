@@ -237,7 +237,7 @@ Verification: a one-off call to `record_rejection(...)` appends one valid JSON l
 
 ---
 
-#### Task 2.2 — Convert silent skips to audited rejections ❌
+#### Task 2.2 — Convert silent skips to audited rejections ✅
 
 Branch: `task/ingestion-pipeline-Task2.2-audit-existing-skips`
 Created from: `feature/ingestion-pipeline-Phase2-structural-checks`
