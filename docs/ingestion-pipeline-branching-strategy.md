@@ -359,7 +359,7 @@ Verification: run `scripts/measure_noise_ratio.py`, replace the `0.0` placeholde
 
 ---
 
-#### Task 2.4 — Low information density gate ❌
+#### Task 2.4 — Low information density gate ✅
 
 Branch: `task/ingestion-pipeline-Task2.4-low-density`
 Created from: `feature/ingestion-pipeline-Phase2-structural-checks`
