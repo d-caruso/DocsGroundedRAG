@@ -492,7 +492,7 @@ Add a dedup stage between structural checks and embedding. First occurrence wins
 
 ---
 
-#### Task 4.1 — Hash-based dedup ❌
+#### Task 4.1 — Hash-based dedup ✅
 
 Branch: `task/ingestion-pipeline-Task4.1-content-hash-dedup`
 Created from: `feature/ingestion-pipeline-Phase4-dedup`
