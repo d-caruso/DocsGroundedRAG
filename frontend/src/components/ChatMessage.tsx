@@ -76,7 +76,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
         py="sm"
         maw={720}
         withBorder={!isUser}
-        bg={isUser ? 'blue.6' : 'blue.0'}
+        bg={isUser ? 'blue.6' : 'dark.6'}
         c={isUser ? 'white' : 'var(--mantine-color-text)'}
         shadow={isUser ? 'sm' : undefined}
         className={isAssistant ? 'answer-chip' : undefined}
