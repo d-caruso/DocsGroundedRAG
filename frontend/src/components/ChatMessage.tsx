@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Box, Button, Code, Group, Paper, ScrollArea, Stack, Text } from '@mantine/core'
+import { ActionIcon, Alert, Box, Button, Code, Group, Paper, ScrollArea, Stack, Text, useMantineColorScheme } from '@mantine/core'
 import { CodeHighlight } from '@mantine/code-highlight'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
@@ -31,6 +31,8 @@ const markdownComponents: Components = {
 }
 
 export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }: ChatMessageProps) {
+  const { colorScheme } = useMantineColorScheme()
+  const isDark = colorScheme === 'dark'
   const isUser = message.role === 'user'
   const isAssistant = message.role === 'assistant'
   const formattedTimestamp = new Intl.DateTimeFormat(undefined, {
@@ -76,7 +78,7 @@ export function ChatMessage({ message, onRetry, onToggleSources, sourcesCount }:
         py="sm"
         maw={720}
         withBorder={!isUser}
-        bg={isUser ? 'blue.6' : 'dark.6'}
+        bg={isUser ? 'blue.6' : isDark ? 'dark.6' : 'gray.1'}
         c={isUser ? 'white' : 'var(--mantine-color-text)'}
         shadow={isUser ? 'sm' : undefined}
         className={isAssistant ? 'answer-chip' : undefined}
