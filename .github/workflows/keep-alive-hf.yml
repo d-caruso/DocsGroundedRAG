@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping HF Space
-        run: curl -sf https://d-caruso-dgrag-api.hf.space/health
+        run: curl -s https://d-caruso-dgrag-api.hf.space/health || true
